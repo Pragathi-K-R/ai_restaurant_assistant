@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 
 # Create async engine with driver auto-detection
 engine_kwargs = {"echo": settings.DEBUG}
-if "postgresql" in settings.DATABASE_URL:
+
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+if "postgresql" in db_url:
     engine_kwargs.update({
         "pool_size": 10,
         "max_overflow": 20,
@@ -20,7 +27,7 @@ if "postgresql" in settings.DATABASE_URL:
         "pool_recycle": 300,
     })
 
-engine = create_async_engine(settings.DATABASE_URL, **engine_kwargs)
+engine = create_async_engine(db_url, **engine_kwargs)
 
 
 # Async session factory
