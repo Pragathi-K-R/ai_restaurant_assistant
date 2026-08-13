@@ -35,12 +35,12 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"📊 Environment: {settings.ENVIRONMENT}")
-    try:
-        await create_tables()
-        logger.info("✅ Database initialized successfully")
-    except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
-        raise
+    # try:
+    #     await create_tables()
+    #     logger.info("✅ Database initialized successfully")
+    # except Exception as e:
+    #     logger.error(f"❌ Database initialization failed: {e}")
+    #     raise
 
     yield
 

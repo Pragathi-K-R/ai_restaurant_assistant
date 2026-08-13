@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # Google Gemini AI
     GOOGLE_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.5-flash"
     EMBEDDING_MODEL: str = "text-embedding-004"
 
     # ChromaDB
@@ -43,6 +43,9 @@ class Settings(BaseSettings):
 
     # Environment
     ENVIRONMENT: str = "development"
+    
+    # Microservice URL for heavy ML/RAG processing
+    ML_SERVICE_URL: str = ""
 
     @property
     def allowed_origins_list(self) -> List[str]:
