@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 
-from app.models.all_models import Order, OrderItem, Menu, Customer, FoodWaste, Inventory
+from app.models.all_models import Order, OrderItem, Menu, Customer, FoodWaste
 
 
 class MLService:
@@ -32,17 +32,18 @@ class MLService:
             )
             .join(OrderItem, Menu.id == OrderItem.menu_item_id)
             .join(Order, OrderItem.order_id == Order.id)
-            .where(Order.status == "completed")
+            .where(Order.status.in_([OrderStatus.DELIVERED, OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PREPARING]))
             .group_by(Menu.name, Menu.category, func.date(Order.created_at))
         )
         result = await self.db.execute(stmt)
         rows = result.all()
 
+        now_utc = datetime.now(timezone.utc)
         if not rows:
             return {
-                "forecast_dates": [(datetime.utcnow() + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, days + 1)],
+                "forecast_dates": [(now_utc + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, days + 1)],
                 "items": [],
-                "summary": "Insufficient completed orders to generate demand forecast."
+                "summary": "Insufficient order history to generate demand forecast."
             }
 
         df = pd.DataFrame(rows, columns=["item_name", "category", "order_date", "daily_quantity"])
@@ -80,7 +81,7 @@ class MLService:
                 "confidence_score": 0.88 if len(item_df) > 3 else 0.75
             })
 
-        dates = [(datetime.utcnow() + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, days + 1)]
+        dates = [(now_utc + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, days + 1)]
 
         return {
             "forecast_dates": dates,
@@ -104,10 +105,16 @@ class MLService:
             }
 
         customer_data = []
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         for c in customers:
-            recency = (now - c.updated_at).days if c.updated_at else 30
+            c_date = c.updated_at
+            if c_date:
+                if c_date.tzinfo is None:
+                    c_date = c_date.replace(tzinfo=timezone.utc)
+                recency = (now - c_date).days
+            else:
+                recency = 30
             frequency = c.total_orders or 1
             monetary = float(c.total_spent or 100.0)
             customer_data.append({
@@ -180,34 +187,5 @@ class MLService:
                             ),
                             "date": w.created_at.strftime("%Y-%m-%d") if w.created_at else "Recent"
                         })
-
-        # 2. Check low stock anomalies
-        inv_stmt = select(Inventory).where(
-            Inventory.quantity <= Inventory.reorder_level,
-            Inventory.is_active == True
-        )
-        inv_res = await self.db.execute(inv_stmt)
-        low_stock_items = inv_res.scalars().all()
-
-        for item in low_stock_items:
-            anomalies.append({
-                "type": "Low Stock Risk",
-                "severity": "high" if item.quantity < (item.reorder_level / 2) else "medium",
-                "title": f"Critical Stock: {item.ingredient_name}",
-                "description": (
-                    f"Current level ({item.quantity} {item.unit}) is below reorder threshold "
-                    f"({item.reorder_level} {item.unit}). Immediate reorder recommended."
-                ),
-                "date": datetime.utcnow().strftime("%Y-%m-%d")
-            })
-
-        if not anomalies:
-            anomalies.append({
-                "type": "System Normal",
-                "severity": "low",
-                "title": "No Critical Operational Anomalies Detected",
-                "description": "Inventory levels and food waste metrics are currently within expected standard deviations.",
-                "date": datetime.utcnow().strftime("%Y-%m-%d")
-            })
 
         return {"anomalies_count": len(anomalies), "anomalies": anomalies}

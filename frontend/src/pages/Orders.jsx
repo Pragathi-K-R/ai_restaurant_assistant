@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { menuAPI, ordersAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
@@ -16,15 +17,27 @@ const CATEGORIES = [
 ];
 
 export default function Orders() {
-  const [activeTab, setActiveTab] = useState('POS'); // 'POS' or 'HISTORY'
+  const location = useLocation();
+  const getInitialTab = () => {
+    if (location.state?.tab) return location.state.tab;
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('tab') === 'history') return 'HISTORY';
+    return 'POS';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab); // 'POS' or 'HISTORY'
   const [menuItems, setMenuItems] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
+
   // POS State
   const [cart, setCart] = useState([]);
-  const [orderType, setOrderType] = useState('DINE_IN');
-  const [tableNumber, setTableNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,13 +102,9 @@ export default function Orders() {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return toast.error('Cart is empty');
-    if (orderType === 'DINE_IN' && !tableNumber) return toast.error('Table number is required for Dine-in');
-
     setIsSubmitting(true);
     try {
       const payload = {
-        order_type: orderType,
-        table_number: tableNumber || null,
         notes: notes || null,
         discount_amount: 0,
         items: cart.map(i => ({ menu_item_id: i.id, quantity: i.qty }))
@@ -106,7 +115,6 @@ export default function Orders() {
       
       // Reset POS
       setCart([]);
-      setTableNumber('');
       setNotes('');
       // Optionally switch to history
       setActiveTab('HISTORY');
@@ -131,8 +139,6 @@ export default function Orders() {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'PENDING': return 'badge-warning';
-      case 'PREPARING': return 'badge-info';
-      case 'READY': return 'badge-primary';
       case 'COMPLETED': return 'badge-success';
       case 'CANCELLED': return 'badge-danger';
       default: return '';
@@ -259,16 +265,7 @@ export default function Orders() {
 
             {/* Checkout Form */}
             <div style={{ padding: '16px', borderTop: '1px solid var(--border-subtle)', background: 'var(--bg-elevated)' }}>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-                <select className="form-input" value={orderType} onChange={e => setOrderType(e.target.value)} style={{ flex: 1 }}>
-                  <option value="DINE_IN">Dine-in</option>
-                  <option value="TAKEAWAY">Takeaway</option>
-                  <option value="DELIVERY">Delivery</option>
-                </select>
-                {orderType === 'DINE_IN' && (
-                  <input type="text" className="form-input" placeholder="Table #" value={tableNumber} onChange={e => setTableNumber(e.target.value)} style={{ width: '80px' }} />
-                )}
-              </div>
+
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Subtotal</span>
@@ -305,7 +302,6 @@ export default function Orders() {
                 <tr>
                   <th>Order ID</th>
                   <th>Date & Time</th>
-                  <th>Type</th>
                   <th>Items</th>
                   <th>Total</th>
                   <th>Status</th>
@@ -317,12 +313,8 @@ export default function Orders() {
                   <tr key={order.id}>
                     <td style={{ fontWeight: 700 }}>#{order.id}</td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{new Date(order.created_at).toLocaleString()}</td>
-                    <td>
-                      {order.order_type.replace('_', ' ')}
-                      {order.table_number && <span style={{ color: 'var(--text-muted)', fontSize: '12px', display: 'block' }}>Table {order.table_number}</span>}
-                    </td>
-                    <td>{order.items.length} items</td>
-                    <td style={{ fontWeight: 700 }}>₹{order.total_amount.toFixed(2)}</td>
+                    <td>{order.items?.length || 0} items</td>
+                    <td style={{ fontWeight: 700 }}>₹{Number(order.total_amount || 0).toFixed(2)}</td>
                     <td><span className={`badge ${getStatusBadgeClass(order.status)}`}>{order.status}</span></td>
                     <td>
                       <div className="dropdown" style={{ display: 'inline-block' }}>
@@ -333,8 +325,6 @@ export default function Orders() {
                           onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                         >
                           <option value="PENDING">Pending</option>
-                          <option value="PREPARING">Preparing</option>
-                          <option value="READY">Ready</option>
                           <option value="COMPLETED">Completed</option>
                           <option value="CANCELLED">Cancelled</option>
                         </select>

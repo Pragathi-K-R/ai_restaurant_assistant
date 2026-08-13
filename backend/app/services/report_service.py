@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, func, and_
 from typing import Tuple, List, Optional
 from datetime import datetime
-from app.models.all_models import Report, Order, FoodWaste, Inventory
+from app.models.all_models import Report, Order, FoodWaste
 from app.repositories.report_repository import ReportRepository
 from app.schemas.report import ReportGenerateRequest, ReportResponse
 import logging
@@ -63,29 +63,6 @@ class ReportService:
             }
         }
 
-    async def _generate_inventory_content(self) -> dict:
-        """Aggregates current inventory snapshot."""
-        query = select(
-            func.count(Inventory.id).label("total_items"),
-            func.sum(Inventory.quantity * Inventory.unit_cost).label("total_value")
-        ).where(Inventory.is_active == True)
-        
-        result = await self.db.execute(query)
-        row = result.fetchone()
-        
-        low_stock_query = select(func.count(Inventory.id)).where(
-            and_(Inventory.is_active == True, Inventory.quantity <= Inventory.reorder_level)
-        )
-        ls_res = await self.db.execute(low_stock_query)
-        low_stock = ls_res.scalar_one() or 0
-        
-        return {
-            "metrics": {
-                "total_items_tracked": row.total_items or 0,
-                "total_inventory_value": float(row.total_value or 0.0),
-                "items_needing_reorder": low_stock
-            }
-        }
 
     async def generate_report(self, user_id: int, request: ReportGenerateRequest) -> ReportResponse:
         content = {}
@@ -98,8 +75,6 @@ class ReportService:
             content = await self._generate_sales_content(start, end)
         elif request.report_type == 'waste':
             content = await self._generate_waste_content(start, end)
-        elif request.report_type == 'inventory':
-            content = await self._generate_inventory_content()
         else:
             raise HTTPException(status_code=400, detail="Invalid report type requested.")
 

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { wasteAPI, inventoryAPI } from '../services/api';
+import { wasteAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
@@ -20,7 +20,7 @@ const WASTE_REASONS = [
 
 export default function FoodWaste() {
   const [records, setRecords] = useState([]);
-  const [inventoryItems, setInventoryItems] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   // Date filter
@@ -30,24 +30,17 @@ export default function FoodWaste() {
   // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    inventory_id: '',
+    ingredient_name: '',
     quantity_wasted: '',
+    unit: 'kg',
     reason: WASTE_REASONS[0],
     waste_date: new Date().toISOString().split('T')[0],
   });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    fetchInventory();
     fetchRecords();
-  }, []);
-
-  const fetchInventory = async () => {
-    try {
-      const res = await inventoryAPI.list({ per_page: 100 });
-      setInventoryItems(res.data.items);
-    } catch { /* silent */ }
-  };
+  }, [startDate, endDate]);
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -68,22 +61,20 @@ export default function FoodWaste() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      // Look up the selected inventory item to get ingredient_name and unit
-      const selectedItem = inventoryItems.find(i => i.id === parseInt(formData.inventory_id));
       const payload = {
-        inventory_id: parseInt(formData.inventory_id),
         quantity_wasted: parseFloat(formData.quantity_wasted),
         reason: formData.reason,
-        ingredient_name: selectedItem ? selectedItem.item_name : 'Unknown',
-        unit: selectedItem ? selectedItem.unit : 'kg',
+        ingredient_name: formData.ingredient_name,
+        unit: formData.unit,
         waste_date: formData.waste_date ? formData.waste_date + 'T00:00:00Z' : undefined,
       };
 
       await wasteAPI.log(payload);
-      toast.success('Waste event logged and stock deducted!');
+      toast.success('Waste event logged!');
       setIsModalOpen(false);
       setFormData({
-        inventory_id: '',
+        ingredient_name: '',
+        unit: 'kg',
         quantity_wasted: '',
         reason: WASTE_REASONS[0],
         waste_date: new Date().toISOString().split('T')[0],
@@ -253,15 +244,13 @@ export default function FoodWaste() {
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="form-group">
-                <label className="form-label">Ingredient / Item *</label>
-                <select className="form-input" required value={formData.inventory_id} onChange={e => setFormData({ ...formData, inventory_id: e.target.value })}>
-                  <option value="">-- Select ingredient --</option>
-                  {inventoryItems.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.item_name} ({item.quantity} {item.unit} available)
-                    </option>
-                  ))}
-                </select>
+                <label className="form-label">Ingredient Name *</label>
+                <input type="text" className="form-input" required value={formData.ingredient_name} onChange={e => setFormData({ ...formData, ingredient_name: e.target.value })} placeholder="e.g. Tomatoes" />
+              </div>
+              
+              <div className="form-group">
+                <label className="form-label">Unit *</label>
+                <input type="text" className="form-input" required value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })} placeholder="e.g. kg, liters, units" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -284,12 +273,7 @@ export default function FoodWaste() {
                 </select>
               </div>
 
-              <div style={{
-                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
-                borderRadius: 'var(--radius-md)', padding: '12px', fontSize: '13px', color: 'var(--color-danger)'
-              }}>
-                <i className="bi bi-info-circle"></i> Logging this event will automatically deduct the quantity from the selected ingredient's stock.
-              </div>
+
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>

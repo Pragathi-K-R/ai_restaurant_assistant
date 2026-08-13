@@ -14,6 +14,7 @@ const NAV_SECTIONS = [
     title: 'Overview',
     items: [
       { path: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2', roles: ['admin', 'manager', 'staff'] },
+      { path: '/customer-dashboard', label: 'Customer Portal', icon: 'bi-shop-window', badge: 'NEW', roles: ['admin', 'manager', 'staff', 'customer'] },
     ],
   },
   {
@@ -27,7 +28,6 @@ const NAV_SECTIONS = [
   {
     title: 'Management',
     items: [
-      { path: '/inventory', label: 'Inventory', icon: 'bi-box-seam-fill', badge: 'low', roles: ['admin', 'manager'] },
       { path: '/employees', label: 'Employees', icon: 'bi-person-badge', roles: ['admin', 'manager'] },
       { path: '/suppliers', label: 'Suppliers', icon: 'bi-truck', roles: ['admin', 'manager'] },
     ],
@@ -37,21 +37,21 @@ const NAV_SECTIONS = [
     items: [
       { path: '/analytics', label: 'Analytics', icon: 'bi-bar-chart-fill', roles: ['admin', 'manager'] },
       { path: '/reports', label: 'Reports', icon: 'bi-file-earmark-bar-graph-fill', roles: ['admin', 'manager'] },
-      { path: '/reviews', label: 'Reviews', icon: 'bi-star-fill', roles: ['admin', 'manager', 'staff'] },
+      { path: '/reviews', label: 'Reviews', icon: 'bi-star-fill', roles: ['admin', 'manager', 'staff', 'customer'] },
       { path: '/food-waste', label: 'Food Waste', icon: 'bi-recycle', roles: ['admin', 'manager'] },
     ],
   },
   {
     title: 'AI Features',
     items: [
-      { path: '/ai-assistant', label: 'AI Assistant', icon: 'bi-robot', badge: 'new', roles: ['admin', 'manager', 'staff'] },
+      { path: '/ai-assistant', label: 'AI Assistant', icon: 'bi-robot', badge: 'new', roles: ['admin', 'manager', 'staff', 'customer'] },
       { path: '/knowledge-base', label: 'Knowledge Base', icon: 'bi-database-fill', roles: ['admin', 'manager'] },
     ],
   },
   {
     title: 'Settings',
     items: [
-      { path: '/profile', label: 'My Profile', icon: 'bi-person-circle', roles: ['admin', 'manager', 'staff'] },
+      { path: '/profile', label: 'My Profile', icon: 'bi-person-circle', roles: ['admin', 'manager', 'staff', 'customer'] },
       { path: '/settings', label: 'Settings', icon: 'bi-gear-fill', roles: ['admin'] },
     ],
   },
@@ -60,11 +60,11 @@ const NAV_SECTIONS = [
 export default function Sidebar({ collapsed, onToggle }) {
   const { user } = useAuth();
   const location = useLocation();
-  const userRole = user?.role || 'staff';
+  const userRole = user?.role || 'customer';
 
   const filteredSections = NAV_SECTIONS.map(section => ({
     ...section,
-    items: section.items.filter(item => item.roles.includes(userRole)),
+    items: section.items.filter(item => !item.roles || item.roles.includes(userRole)),
   })).filter(section => section.items.length > 0);
 
   return (

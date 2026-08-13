@@ -69,7 +69,7 @@ async def create_tables():
     async with engine.begin() as conn:
         # Import all models to register them with Base
         from app.models import user, restaurant, customer, order, menu
-        from app.models import inventory, employee, supplier, review, payment
+        from app.models import employee, supplier, review, payment
         from app.models import report, ai_log
         await conn.run_sync(Base.metadata.create_all)
     logger.info("✅ Database tables created successfully")

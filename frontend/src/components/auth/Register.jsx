@@ -10,9 +10,10 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 const ROLES = [
-  { value: 'admin', label: 'Admin', icon: 'bi-shield-fill' },
-  { value: 'manager', label: 'Manager', icon: 'bi-person-badge-fill' },
+  { value: 'customer', label: 'Customer', icon: 'bi-bag-heart-fill' },
   { value: 'staff', label: 'Staff', icon: 'bi-person-fill' },
+  { value: 'manager', label: 'Manager', icon: 'bi-person-badge-fill' },
+  { value: 'admin', label: 'Admin', icon: 'bi-shield-fill' },
 ];
 
 export default function Register() {
@@ -25,7 +26,7 @@ export default function Register() {
     password: '',
     confirm_password: '',
     phone: '',
-    role: 'staff',
+    role: 'customer',
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);

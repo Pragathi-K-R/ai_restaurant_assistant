@@ -12,7 +12,6 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 const REPORT_TYPES = [
   { id: 'sales', label: 'Sales & Revenue Report' },
   { id: 'waste', label: 'Food Waste Analysis' },
-  { id: 'inventory', label: 'Inventory Status' },
 ];
 
 export default function Reports() {
@@ -132,25 +131,6 @@ export default function Reports() {
           <div className="stat-card">
             <p className="stat-label">Financial Loss</p>
             <p className="stat-value text-danger">₹{data.total_financial_loss.toLocaleString('en-IN')}</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (report.report_type === 'inventory') {
-      return (
-        <div className="grid-3">
-          <div className="stat-card">
-            <p className="stat-label">Items Tracked</p>
-            <p className="stat-value">{data.total_items_tracked}</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-label">Low Stock Alerts</p>
-            <p className="stat-value text-warning">{data.items_needing_reorder}</p>
-          </div>
-          <div className="stat-card">
-            <p className="stat-label">Total Value</p>
-            <p className="stat-value text-success">₹{data.total_inventory_value.toLocaleString('en-IN')}</p>
           </div>
         </div>
       );
@@ -318,29 +298,16 @@ export default function Reports() {
                 </select>
               </div>
 
-              {formData.report_type !== 'inventory' && (
-                <>
-                  <div className="form-group">
-                    <label className="form-label">Start Date</label>
-                    <input type="date" className="form-input" required value={formData.period_start}
-                      onChange={e => setFormData({ ...formData, period_start: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">End Date</label>
-                    <input type="date" className="form-input" required value={formData.period_end}
-                      onChange={e => setFormData({ ...formData, period_end: e.target.value })} />
-                  </div>
-                </>
-              )}
-              {formData.report_type === 'inventory' && (
-                <div style={{ 
-                  background: 'rgba(59,130,246,0.1)', padding: '12px', borderRadius: 'var(--radius-md)', 
-                  color: '#3b82f6', fontSize: '13px', display: 'flex', gap: '8px'
-                }}>
-                  <i className="bi bi-info-circle"></i> 
-                  Inventory reports capture the current real-time stock snapshot, so date ranges are ignored.
-                </div>
-              )}
+              <div className="form-group">
+                <label className="form-label">Start Date</label>
+                <input type="date" className="form-input" required value={formData.period_start}
+                  onChange={e => setFormData({ ...formData, period_start: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">End Date</label>
+                <input type="date" className="form-input" required value={formData.period_end}
+                  onChange={e => setFormData({ ...formData, period_end: e.target.value })} />
+              </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
                 <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>

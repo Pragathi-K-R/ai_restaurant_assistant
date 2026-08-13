@@ -19,10 +19,10 @@ import ResetPassword from './components/auth/ResetPassword';
 
 // Application Pages
 import Dashboard from './pages/Dashboard';
+import CustomerDashboard from './pages/CustomerDashboard';
 import Menu from './pages/Menu';
 import Orders from './pages/Orders';
 import Customers from './pages/Customers';
-import Inventory from './pages/Inventory';
 import FoodWaste from './pages/FoodWaste';
 import Employees from './pages/Employees';
 import Suppliers from './pages/Suppliers';
@@ -38,7 +38,7 @@ import NotFound from './pages/NotFound';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         {/* Global Toast Notifications */}
         <Toaster
           position="top-right"
@@ -80,6 +80,8 @@ export default function App() {
             }
           >
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+            <Route path="/customer" element={<CustomerDashboard />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/customers" element={<Customers />} />
@@ -88,14 +90,7 @@ export default function App() {
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />
 
-            <Route
-              path="/inventory"
-              element={
-                <ProtectedRoute roles={['admin', 'manager']}>
-                  <Inventory />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/employees"
               element={

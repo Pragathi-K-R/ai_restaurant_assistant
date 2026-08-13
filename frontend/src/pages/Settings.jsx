@@ -137,7 +137,7 @@ export default function Settings() {
             onChange={(e) => setSettings({ ...settings, enableNotifications: e.target.checked })}
           />
           <label htmlFor="notifications" style={{ fontSize: '14px', cursor: 'pointer' }}>
-            Enable low stock & anomaly notifications
+            Enable operational waste & anomaly notifications
           </label>
         </div>
         <div className="mb-4 d-flex align-items-center gap-2">
@@ -148,7 +148,7 @@ export default function Settings() {
             onChange={(e) => setSettings({ ...settings, autoReorder: e.target.checked })}
           />
           <label htmlFor="autoReorder" style={{ fontSize: '14px', cursor: 'pointer' }}>
-            Auto-generate reorder suggestions when inventory drops below threshold
+            Auto-generate waste mitigation suggestions when waste exceeds threshold
           </label>
         </div>
 

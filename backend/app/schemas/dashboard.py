@@ -28,13 +28,6 @@ class ChartData(BaseModel):
     labels: List[str]
     datasets: List[ChartDataset]
 
-class LowStockItem(BaseModel):
-    id: int
-    name: str
-    quantity: float
-    unit: str
-    reorder_level: float
-
 class AIRecommendation(BaseModel):
     title: str
     description: str
@@ -47,5 +40,5 @@ class DashboardResponse(BaseModel):
     revenue_chart: ChartData
     orders_chart: ChartData
     customer_chart: ChartData
-    low_stock_items: List[LowStockItem]
+
     ai_recommendations: List[AIRecommendation]

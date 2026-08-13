@@ -7,7 +7,7 @@ from app.schemas.user import (
 )
 from app.schemas.dashboard import (
     StatCard, ChartDataPoint, ChartDataset, ChartData, 
-    LowStockItem, AIRecommendation, DashboardResponse
+    AIRecommendation, DashboardResponse
 )
 from app.schemas.menu import (
     MenuCreate, MenuUpdate, MenuResponse, MenuListResponse
@@ -18,9 +18,7 @@ from app.schemas.order import (
 from app.schemas.customer import (
     CustomerCreate, CustomerUpdate, CustomerResponse, CustomerListResponse
 )
-from app.schemas.inventory import (
-    InventoryCreate, InventoryUpdate, InventoryResponse, InventoryListResponse
-)
+
 from app.schemas.waste import (
     WasteCreate, WasteUpdate, WasteResponse, WasteListResponse
 )
@@ -47,11 +45,11 @@ __all__ = [
     "ForgotPasswordRequest", "ResetPasswordRequest", "ChangePasswordRequest",
     "MessageResponse",
     "StatCard", "ChartDataPoint", "ChartDataset", "ChartData",
-    "LowStockItem", "AIRecommendation", "DashboardResponse",
+    "AIRecommendation", "DashboardResponse",
     "MenuCreate", "MenuUpdate", "MenuResponse", "MenuListResponse",
     "OrderCreate", "OrderUpdate", "OrderResponse", "OrderItemResponse", "OrderListResponse",
     "CustomerCreate", "CustomerUpdate", "CustomerResponse", "CustomerListResponse",
-    "InventoryCreate", "InventoryUpdate", "InventoryResponse", "InventoryListResponse",
+
     "WasteCreate", "WasteUpdate", "WasteResponse", "WasteListResponse",
     "EmployeeCreate", "EmployeeUpdate", "EmployeeResponse", "EmployeeListResponse",
     "SupplierCreate", "SupplierUpdate", "SupplierResponse", "SupplierListResponse",

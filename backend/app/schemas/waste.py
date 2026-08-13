@@ -9,7 +9,6 @@ from datetime import date, datetime
 
 
 class WasteBase(BaseModel):
-    inventory_id: Optional[int] = None
     ingredient_name: str = Field(..., max_length=200)
     quantity_wasted: float = Field(..., gt=0)
     unit: str = Field(..., max_length=30)
@@ -28,7 +27,6 @@ class WasteUpdate(BaseModel):
 
 class WasteResponse(BaseModel):
     id: int
-    inventory_id: Optional[int] = None
     ingredient_name: str
     quantity_wasted: float
     unit: str

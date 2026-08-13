@@ -1,10 +1,10 @@
 """
 Order schemas for request validation and response serialization.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
-from app.models.all_models import OrderStatus, OrderType
+from app.models.all_models import OrderStatus
 from app.schemas.menu import MenuResponse
 
 class OrderItemBase(BaseModel):
@@ -24,8 +24,6 @@ class OrderItemResponse(OrderItemBase):
 
 class OrderBase(BaseModel):
     customer_id: Optional[int] = None
-    order_type: OrderType
-    table_number: Optional[str] = None
     discount_amount: float = Field(0.0, ge=0)
     notes: Optional[str] = None
 
@@ -38,7 +36,7 @@ class OrderUpdate(BaseModel):
 
 class OrderResponse(OrderBase):
     id: int
-    user_id: int
+    user_id: Optional[int] = None
     status: OrderStatus
     subtotal: float
     tax_amount: float

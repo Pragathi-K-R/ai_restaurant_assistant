@@ -1,4 +1,4 @@
-"""Customer, Order, Menu, Inventory, Employee, Supplier, Review, Payment, Report, AI Log models — placeholders."""
+"""Customer, Order, Menu, Employee, Supplier, Review, Payment, Report, AI Log models — placeholders."""
 
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, Float, ForeignKey, Numeric, Enum, JSON
 from sqlalchemy.orm import synonym, relationship
@@ -33,12 +33,6 @@ class OrderStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class OrderType(str, enum.Enum):
-    DINE_IN = "dine_in"
-    TAKEAWAY = "takeaway"
-    DELIVERY = "delivery"
-
-
 class PaymentStatus(str, enum.Enum):
     PENDING = "pending"
     PAID = "paid"
@@ -56,18 +50,11 @@ class Order(Base):
     discount = Column(Numeric(8, 2), default=0)
     tax = Column(Numeric(8, 2), default=0)
     notes = Column(Text, nullable=True)
-    table_number = Column(String(20), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan", lazy="selectin")
 
-    @property
-    def order_type(self) -> OrderType:
-        return OrderType.DINE_IN if self.table_number else OrderType.TAKEAWAY
-
-    @property
-    def user_id(self) -> int:
-        return 1
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     @property
     def discount_amount(self) -> float:
@@ -131,34 +118,7 @@ class Menu(Base):
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
-class RecipeItem(Base):
-    __tablename__ = "recipe_items"
-    id = Column(Integer, primary_key=True, index=True)
-    menu_item_id = Column(Integer, ForeignKey("menu.id"), nullable=False)
-    inventory_id = Column(Integer, ForeignKey("inventory.id"), nullable=False)
-    quantity_required = Column(Float, nullable=False)  # amount to deduct per order
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-
-class Inventory(Base):
-    __tablename__ = "inventory"
-    id = Column(Integer, primary_key=True, index=True)
-    ingredient_name = Column(String(200), nullable=False)
-    item_name = synonym("ingredient_name")
-    category = Column(String(100), nullable=True)
-    quantity = Column(Float, default=0)
-    unit = Column(String(30), nullable=False)
-    unit_cost = Column(Numeric(10, 2), nullable=True)
-    unit_price = synonym("unit_cost")
-    reorder_level = Column(Float, default=0)
-    max_stock = Column(Float, nullable=True)
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
-    expiry_date = Column(DateTime(timezone=True), nullable=True)
-    last_restocked = Column(DateTime(timezone=True), nullable=True)
-    location = Column(String(100), nullable=True)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class Employee(Base):
@@ -249,7 +209,6 @@ class AILog(Base):
 class FoodWaste(Base):
     __tablename__ = "food_waste"
     id = Column(Integer, primary_key=True, index=True)
-    inventory_id = Column(Integer, ForeignKey("inventory.id"), nullable=True)
     ingredient_name = Column(String(200), nullable=False)
     quantity_wasted = Column(Float, nullable=False)
     unit = Column(String(30), nullable=False)
@@ -259,3 +218,13 @@ class FoodWaste(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 from app.models.setting import Setting
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    type = Column(String(50), nullable=False)  # warning, success, info, danger
+    text = Column(String(500), nullable=False)
+    icon = Column(String(50), nullable=True)
+    is_read = Column(Boolean, default=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

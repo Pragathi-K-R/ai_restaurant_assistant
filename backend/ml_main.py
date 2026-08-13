@@ -11,8 +11,9 @@ from typing import List, Dict, Any, Optional
 
 from app.core.config import settings
 from app.core.database import get_db, create_tables
-from app.core.dependencies import get_current_user
-from app.models.user import User
+from app.core.dependencies import get_current_user, bearer_scheme, oauth2_scheme
+from app.core.security import verify_access_token
+from app.models.user import User, UserRole
 
 from app.services.ml_service import MLService
 from app.services.ai_service import AIService
@@ -22,6 +23,19 @@ from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+async def get_token_user(
+    credentials=Depends(bearer_scheme),
+    oauth2_token: str = Depends(oauth2_scheme)
+) -> User:
+    token = credentials.credentials if credentials else oauth2_token
+    if not token:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+    payload = verify_access_token(token)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+    return User(id=int(payload.get("sub")), role=payload.get("role", UserRole.STAFF))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,7 +68,7 @@ class AddKnowledgeDocRequest(BaseModel):
 @app.get("/analytics/demand-forecast")
 async def get_demand_forecast(
     days: int = Query(7, ge=1, le=30),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_token_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = MLService(db)
@@ -62,7 +76,7 @@ async def get_demand_forecast(
 
 @app.get("/analytics/customer-segments")
 async def get_customer_segmentation(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_token_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = MLService(db)
@@ -70,7 +84,7 @@ async def get_customer_segmentation(
 
 @app.get("/analytics/anomalies")
 async def get_anomalies(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_token_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = MLService(db)
@@ -81,7 +95,7 @@ async def get_anomalies(
 @app.post("/ai/chat", response_model=ChatResponse)
 async def chat_with_assistant(
     request: ChatRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_token_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = AIService(db)
@@ -91,7 +105,7 @@ async def chat_with_assistant(
 async def get_chat_history(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_token_user),
     db: AsyncSession = Depends(get_db)
 ):
     service = AIService(db)
@@ -99,7 +113,7 @@ async def get_chat_history(
     return AILogListResponse(logs=logs, total=total, page=page, per_page=per_page)
 
 @app.get("/ai/knowledge-base")
-async def get_knowledge_base_documents(current_user: User = Depends(get_current_user)):
+async def get_knowledge_base_documents(current_user: User = Depends(get_token_user)):
     vector_db.initialize()
     if vector_db.collection:
         try:
@@ -117,7 +131,7 @@ async def get_knowledge_base_documents(current_user: User = Depends(get_current_
 @app.post("/ai/knowledge-base")
 async def add_knowledge_base_document(
     doc: AddKnowledgeDocRequest,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_token_user)
 ):
     vector_db.initialize()
     metadata = {"category": doc.category, "added_by": current_user.email}

@@ -1,111 +1,141 @@
-"""
-Seed script to populate initial mock data in the sqlite database.
-Run with: python seed_data.py
-"""
-
 import asyncio
+import random
 from datetime import datetime, timezone, timedelta
-from app.core.database import AsyncSessionLocal, create_tables
+from app.core.database import AsyncSessionLocal, create_tables, engine, Base
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.models.all_models import (
-    Customer, Menu, Inventory, Employee, Supplier,
+    Customer, Menu, Employee, Supplier,
     Order, OrderItem, Review, FoodWaste,
     FoodCategory, OrderStatus, PaymentStatus
 )
+from sqlalchemy import text
+
+async def clear_database():
+    print("[INFO] Dropping existing tables to start fresh...")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
 async def seed_database():
+    await clear_database()
     print("[INFO] Initializing database schema...")
-    await create_tables()
-
+    
     async with AsyncSessionLocal() as session:
-        # Check if user exists
-        admin_user = await session.execute(
-            User.__table__.select().where(User.email == "admin@restaurant.com")
-        )
-        if admin_user.first() is not None:
-            print("[INFO] Database already contains seed data.")
-            return
-
-        print("[INFO] Seeding default users...")
+        print("[INFO] Seeding default users (3)...")
         hashed_pwd = get_password_hash("Admin@123")
-        admin = User(
-            full_name="Admin Chef",
-            email="admin@restaurant.com",
-            hashed_password=hashed_pwd,
-            role=UserRole.ADMIN,
-            is_active=True,
-            is_verified=True
-        )
-        manager = User(
-            full_name="Bistro Manager",
-            email="manager@restaurant.com",
-            hashed_password=hashed_pwd,
-            role=UserRole.MANAGER,
-            is_active=True,
-            is_verified=True
-        )
-        varsha = User(
-            full_name="Varsha K M",
-            email="varshakm@gmail.com",
-            hashed_password=hashed_pwd,
-            role=UserRole.ADMIN,
-            is_active=True,
-            is_verified=True
-        )
-        session.add_all([admin, manager, varsha])
+        admin = User(full_name="Admin Chef", email="admin@restaurant.com", hashed_password=hashed_pwd, role=UserRole.ADMIN, is_active=True, is_verified=True)
+        manager = User(full_name="Bistro Manager", email="manager@restaurant.com", hashed_password=hashed_pwd, role=UserRole.MANAGER, is_active=True, is_verified=True)
+        staff = User(full_name="Wait Staff", email="staff@restaurant.com", hashed_password=hashed_pwd, role=UserRole.STAFF, is_active=True, is_verified=True)
+        session.add_all([admin, manager, staff])
         await session.flush()
 
-        print("[INFO] Seeding suppliers...")
-        sup1 = Supplier(name="Fresh Farms Organic", contact_person="John Doe", phone="+91 98765 43210", email="john@freshfarms.com", category="Vegetables & Dairy")
-        sup2 = Supplier(name="Prime Meats Ltd", contact_person="Sarah Smith", phone="+91 98765 12345", email="sarah@primemeats.com", category="Poultry & Meat")
-        session.add_all([sup1, sup2])
+        print("[INFO] Seeding suppliers (10)...")
+        suppliers = []
+        sup_names = ["Fresh Farms Organic", "Prime Meats Ltd", "Dairy Best Co", "Spice Route Traders", "Oceanic Seafoods", "Green Valley Veg", "Himalayan Waters", "Metro Cash & Carry", "Global Packaging", "City Bakers"]
+        for name in sup_names:
+            s = Supplier(name=name, contact_person=name.split()[0], phone=f"+91 98{random.randint(10000000, 99999999)}", email=f"contact@{name.split()[0].lower()}.com", category="General")
+            session.add(s)
+            suppliers.append(s)
         await session.flush()
 
-        print("[INFO] Seeding inventory...")
-        inv1 = Inventory(ingredient_name="Basmati Rice", category="Grains", quantity=45.0, unit="kg", unit_cost=90.0, reorder_level=15.0, max_stock=100.0, supplier_id=sup1.id)
-        inv2 = Inventory(ingredient_name="Chicken Breast", category="Meat", quantity=12.0, unit="kg", unit_cost=250.0, reorder_level=20.0, max_stock=60.0, supplier_id=sup2.id)
-        inv3 = Inventory(ingredient_name="Paneer (Cottage Cheese)", category="Dairy", quantity=8.0, unit="kg", unit_cost=320.0, reorder_level=10.0, max_stock=30.0, supplier_id=sup1.id)
-        session.add_all([inv1, inv2, inv3])
+        print("[INFO] Seeding employees (10)...")
+        employees = []
+        emp_names = ["Rajesh Kumar", "Anita Verma", "Vikram Singh", "Priya Patel", "Amit Sharma", "Suresh Menon", "Kavita Reddy", "Ramesh Rao", "Deepa Nair", "Manoj Gupta"]
+        roles = ["Head Chef", "Sous Chef", "Waiter", "Waitress", "Cashier", "Cleaner", "Manager", "Delivery Boy", "Cook", "Bartender"]
+        for i in range(10):
+            e = Employee(name=emp_names[i], email=f"{emp_names[i].split()[0].lower()}@restaurant.com", phone=f"+91 91{random.randint(10000000, 99999999)}", position=roles[i], department="Operations", salary=random.randint(15000, 75000))
+            session.add(e)
+            employees.append(e)
         await session.flush()
 
-        print("[INFO] Seeding menu...")
-        m1 = Menu(name="Butter Chicken", description="Tender chicken cooked in rich tomato butter gravy", category=FoodCategory.MAIN_COURSE, price=380.0, cost_price=160.0, total_orders=145, rating=4.8)
-        m2 = Menu(name="Paneer Tikka", description="Char-grilled spiced cottage cheese cubes with mint chutney", category=FoodCategory.APPETIZER, price=290.0, cost_price=110.0, total_orders=98, rating=4.6)
-        m3 = Menu(name="Gulab Jamun", description="Soft milk-solid dumplings soaked in cardamom sugar syrup", category=FoodCategory.DESSERT, price=140.0, cost_price=40.0, total_orders=210, rating=4.9)
-        session.add_all([m1, m2, m3])
+        print("[INFO] Seeding menu items (20+)...")
+        menus = []
+        menu_items = [
+            ("Butter Chicken", FoodCategory.MAIN_COURSE, 380.0, 150.0),
+            ("Paneer Tikka", FoodCategory.APPETIZER, 290.0, 110.0),
+            ("Gulab Jamun", FoodCategory.DESSERT, 140.0, 40.0),
+            ("Garlic Naan", FoodCategory.MAIN_COURSE, 60.0, 15.0),
+            ("Chicken Biryani", FoodCategory.MAIN_COURSE, 420.0, 180.0),
+            ("Mutton Rogan Josh", FoodCategory.MAIN_COURSE, 550.0, 250.0),
+            ("Dal Makhani", FoodCategory.MAIN_COURSE, 250.0, 90.0),
+            ("Masala Dosa", FoodCategory.MAIN_COURSE, 180.0, 50.0),
+            ("Idli Sambar", FoodCategory.MAIN_COURSE, 120.0, 30.0),
+            ("Tandoori Chicken", FoodCategory.APPETIZER, 450.0, 200.0),
+            ("Samosa Chaat", FoodCategory.SNACK, 110.0, 35.0),
+            ("Pani Puri", FoodCategory.SNACK, 80.0, 20.0),
+            ("Mango Lassi", FoodCategory.BEVERAGE, 120.0, 40.0),
+            ("Masala Chai", FoodCategory.BEVERAGE, 50.0, 15.0),
+            ("Cold Coffee", FoodCategory.BEVERAGE, 150.0, 60.0),
+            ("Rasmalai", FoodCategory.DESSERT, 160.0, 55.0),
+            ("Gajar Ka Halwa", FoodCategory.DESSERT, 180.0, 70.0),
+            ("Palak Paneer", FoodCategory.MAIN_COURSE, 310.0, 120.0),
+            ("Fish Curry", FoodCategory.MAIN_COURSE, 480.0, 210.0),
+            ("Veg Pulao", FoodCategory.MAIN_COURSE, 220.0, 80.0),
+            ("Chole Bhature", FoodCategory.MAIN_COURSE, 240.0, 95.0),
+            ("Aloo Paratha", FoodCategory.MAIN_COURSE, 100.0, 35.0)
+        ]
+        for name, cat, price, cost in menu_items:
+            m = Menu(name=name, description=f"Delicious {name}", category=cat, price=price, cost_price=cost, total_orders=random.randint(50, 500), rating=random.uniform(4.0, 5.0))
+            session.add(m)
+            menus.append(m)
         await session.flush()
 
-        print("[INFO] Seeding customers...")
-        c1 = Customer(name="Aarav Sharma", email="aarav@example.com", phone="+91 99887 76655", total_orders=12, total_spent=4200.0, segment="VIP High Value")
-        c2 = Customer(name="Priya Patel", email="priya@example.com", phone="+91 98877 66554", total_orders=5, total_spent=1450.0, segment="Regular Loyalist")
-        session.add_all([c1, c2])
+        print("[INFO] Seeding customers (25+)...")
+        customers = []
+        for i in range(25):
+            c = Customer(name=f"Customer {i+1}", email=f"cust{i+1}@example.com", phone=f"+91 99{random.randint(10000000, 99999999)}", total_orders=random.randint(1, 20), total_spent=random.uniform(500, 15000), segment="Regular")
+            session.add(c)
+            customers.append(c)
         await session.flush()
 
-        print("[INFO] Seeding employees...")
-        e1 = Employee(name="Chef Rajesh Kumar", email="rajesh@restaurant.com", phone="+91 91234 56789", position="Head Chef", department="Kitchen", salary=55000.0)
-        e2 = Employee(name="Anita Verma", email="anita@restaurant.com", phone="+91 92345 67890", position="Floor Supervisor", department="Service", salary=35000.0)
-        session.add_all([e1, e2])
+        print("[INFO] Seeding orders and order items (30+ orders, 50+ items)...")
+        orders = []
+        now = datetime.now(timezone.utc)
+        for i in range(35):
+            cust = random.choice(customers)
+            # random date within last 30 days
+            created_at = now - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+            
+            o = Order(customer_id=cust.id, status=random.choice(list(OrderStatus)), payment_status=PaymentStatus.PAID, total_amount=0, created_at=created_at)
+            session.add(o)
+            await session.flush()
+            orders.append(o)
+            
+            # Add 1 to 4 items per order
+            num_items = random.randint(1, 4)
+            total = 0
+            for _ in range(num_items):
+                m = random.choice(menus)
+                qty = random.randint(1, 3)
+                price = qty * m.price
+                total += price
+                oi = OrderItem(order_id=o.id, menu_item_id=m.id, quantity=qty, unit_price=m.price, total_price=price, created_at=created_at)
+                session.add(oi)
+            
+            o.total_amount = total + (total * 0.05) # 5% tax
+            o.tax = total * 0.05
 
-        print("[INFO] Seeding orders...")
-        o1 = Order(customer_id=c1.id, status=OrderStatus.READY, payment_status=PaymentStatus.PAID, total_amount=670.0, table_number="T4")
-        session.add(o1)
         await session.flush()
 
-        item1 = OrderItem(order_id=o1.id, menu_item_id=m1.id, quantity=1, unit_price=380.0, total_price=380.0)
-        item2 = OrderItem(order_id=o1.id, menu_item_id=m2.id, quantity=1, unit_price=290.0, total_price=290.0)
-        session.add_all([item1, item2])
-
-        print("[INFO] Seeding reviews...")
-        r1 = Review(customer_id=c1.id, order_id=o1.id, rating=5, comment="Exceptional butter chicken! Rich flavor and fast service.", sentiment="positive", sentiment_score=0.95, is_verified=True)
-        session.add(r1)
-
-        print("[INFO] Seeding food waste...")
-        w1 = FoodWaste(inventory_id=inv2.id, ingredient_name="Chicken Breast", quantity_wasted=2.5, unit="kg", reason="Expired / Spoiled", cost=625.0)
-        session.add(w1)
+        print("[INFO] Seeding reviews (30+)...")
+        for i in range(32):
+            o = random.choice(orders)
+            rating = random.randint(3, 5) if random.random() > 0.2 else random.randint(1, 2)
+            sentiment = "positive" if rating >= 4 else ("negative" if rating <= 2 else "neutral")
+            r = Review(customer_id=o.customer_id, order_id=o.id, rating=rating, comment=f"My rating is {rating} stars.", sentiment=sentiment, sentiment_score=float(rating)/5.0, is_verified=True, created_at=o.created_at + timedelta(hours=1))
+            session.add(r)
+        
+        print("[INFO] Seeding food waste (20+)...")
+        waste_items = ["Tomatoes", "Onions", "Milk", "Rice", "Chicken", "Paneer", "Yogurt", "Coriander", "Lemon", "Fish"]
+        reasons = ["Expired", "Overcooked", "Dropped", "Spoiled", "Trim Waste"]
+        for i in range(25):
+            created_at = now - timedelta(days=random.randint(0, 30))
+            w = FoodWaste(ingredient_name=random.choice(waste_items), quantity_wasted=random.uniform(0.5, 5.0), unit="kg", reason=random.choice(reasons), cost=random.uniform(50, 500), waste_date=created_at, created_at=created_at)
+            session.add(w)
 
         await session.commit()
-        print("[SUCCESS] Database seeded successfully with initial data!")
+        print("[SUCCESS] Database seeded successfully with 100+ records!")
 
 if __name__ == "__main__":
     asyncio.run(seed_database())

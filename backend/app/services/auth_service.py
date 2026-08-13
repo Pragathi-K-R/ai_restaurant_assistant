@@ -42,37 +42,40 @@ class AuthService:
     async def register(self, user_data: UserCreate) -> UserResponse:
         """
         Register a new user.
-        
-        Args:
-            user_data: Validated user creation data
-        
-        Returns:
-            UserResponse of the created user
-        
-        Raises:
-            HTTPException 409 if email already exists
         """
-        # Check duplicate email
-        if await self.repo.email_exists(user_data.email.lower()):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An account with this email already exists"
+        try:
+            logger.info(f"Attempting to register user: {user_data.email}")
+            
+            # Check duplicate email
+            logger.debug("Checking for duplicate email...")
+            if await self.repo.email_exists(user_data.email.lower()):
+                logger.warning(f"Registration failed: Email {user_data.email} already exists")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="An account with this email already exists"
+                )
+
+            # Create user model instance
+            logger.debug("Hashing password and creating User model...")
+            user = User(
+                full_name=user_data.full_name,
+                email=user_data.email.lower(),
+                hashed_password=get_password_hash(user_data.password),
+                role=user_data.role,
+                phone=user_data.phone,
+                is_active=True,
+                is_verified=False,
             )
 
-        # Create user model instance
-        user = User(
-            full_name=user_data.full_name,
-            email=user_data.email.lower(),
-            hashed_password=get_password_hash(user_data.password),
-            role=user_data.role,
-            phone=user_data.phone,
-            is_active=True,
-            is_verified=False,
-        )
-
-        created_user = await self.repo.create(user)
-        logger.info(f"New user registered: {created_user.email} (role={created_user.role})")
-        return UserResponse.model_validate(created_user)
+            logger.debug("Persisting user to database...")
+            created_user = await self.repo.create(user)
+            logger.info(f"New user registered successfully: {created_user.email} (role={created_user.role})")
+            return UserResponse.model_validate(created_user)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error during registration for {user_data.email}: {str(e)}")
+            raise
 
     async def login(self, login_data: LoginRequest) -> TokenResponse:
         """

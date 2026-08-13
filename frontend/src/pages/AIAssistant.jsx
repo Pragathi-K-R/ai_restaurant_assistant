@@ -32,6 +32,7 @@ export default function AIAssistant() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState([]);
+  const [geminiStatus, setGeminiStatus] = useState('checking');
   const chatEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -44,7 +45,21 @@ export default function AIAssistant() {
 
   useEffect(() => {
     fetchHistory();
+    checkGeminiStatus();
   }, []);
+
+  const checkGeminiStatus = async () => {
+    try {
+      const res = await aiAPI.status();
+      if (res.data && res.data.test_result === "SUCCESS") {
+        setGeminiStatus('online');
+      } else {
+        setGeminiStatus('offline');
+      }
+    } catch (err) {
+      setGeminiStatus('offline');
+    }
+  };
 
   const fetchHistory = async () => {
     try {
@@ -95,13 +110,18 @@ export default function AIAssistant() {
       console.error('Response:', err.response?.data || err.message);
       console.error('Message:', err.message);
       
+      let errorMessage = '⚠️ I encountered an error connecting to the AI engine. Please verify your connection or try again.';
+      if (err.response?.data?.detail?.message) {
+        errorMessage = `⚠️ **${err.response.data.detail.error_type}**: ${err.response.data.detail.message}`;
+      }
+      
       toast.error('Failed to get answer from AI Assistant');
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 2,
           role: 'assistant',
-          content: '⚠️ I encountered an error connecting to the AI engine. Please verify your connection or try again.',
+          content: errorMessage,
           sources: [],
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
@@ -148,9 +168,9 @@ export default function AIAssistant() {
       color: '#10b981'
     },
     {
-      category: 'Inventory Optimization',
+      category: 'Food Waste Insights',
       icon: <FiPieChart />,
-      text: 'Which ingredients are running low on stock?',
+      text: 'Analyze the recent food waste patterns.',
       color: '#f59e0b'
     },
     {
@@ -186,9 +206,21 @@ export default function AIAssistant() {
               </div>
               <div className="ai-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
                 <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '14px' }}>Gemini Core</span>
-                <span style={{ fontSize: '11px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span className="status-dot" style={{ width: '6px', height: '6px', background: '#10b981', borderRadius: '50%' }}></span> Online & Ready
-                </span>
+                {geminiStatus === 'checking' && (
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="status-dot" style={{ width: '6px', height: '6px', background: 'var(--text-muted)', borderRadius: '50%' }}></span> Checking Status...
+                  </span>
+                )}
+                {geminiStatus === 'online' && (
+                  <span style={{ fontSize: '11px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="status-dot" style={{ width: '6px', height: '6px', background: '#10b981', borderRadius: '50%' }}></span> Online & Ready
+                  </span>
+                )}
+                {geminiStatus === 'offline' && (
+                  <span style={{ fontSize: '11px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="status-dot" style={{ width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%' }}></span> Configuration Required
+                  </span>
+                )}
               </div>
             </div>
             <button className="btn btn-primary btn-block btn-sm mt-4" onClick={handleNewChat} style={{
@@ -469,7 +501,7 @@ export default function AIAssistant() {
             <textarea
               className="ai-input"
               rows="1"
-              placeholder="Ask me a question (e.g., 'What is our average menu rating?', 'Show low stock ingredients')"
+              placeholder="Ask me a question (e.g., 'What are our best-selling items?', 'Show food waste trends')"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyPress}
@@ -532,14 +564,7 @@ export default function AIAssistant() {
               </div>
             </div>
             
-            <div className="insight-card" style={{ borderLeft: '4px solid #f59e0b', padding: '12px 16px' }}>
-              <div className="insight-header text-warning" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 'bold' }}>
-                <FiAlertCircle /> Reorder Level Alerts
-              </div>
-              <div className="insight-body" style={{ fontSize: '12.5px', marginTop: '6px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
-                Avocados and Truffle Oil are currently below the critical reorder threshold. Stock level is under 15%.
-              </div>
-            </div>
+
             
             <div className="insight-card" style={{ borderLeft: '4px solid #3b82f6', padding: '12px 16px' }}>
               <div className="insight-header text-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 'bold' }}>
@@ -555,7 +580,7 @@ export default function AIAssistant() {
             <FiHelpCircle style={{ fontSize: '24px', color: 'var(--text-muted)', marginBottom: '8px' }} />
             <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--text-primary)' }}>Need Operations Help?</div>
             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: '1.4' }}>
-              Ask the assistant for recipe ratios, inventory audits, or staff allocations to optimize efficiency.
+              Ask the assistant for insights on menu performance, waste reduction strategies, or sentiment analysis.
             </div>
           </div>
         </div>

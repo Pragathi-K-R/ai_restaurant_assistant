@@ -161,23 +161,52 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid-4" style={{ marginBottom: '24px' }}>
-        {data.quick_stats.map((stat, i) => (
-          <div key={i} className="stat-card" style={{ '--gradient': stat.color }}>
-            <div>
-              <p className="stat-label">{stat.label}</p>
-              <p className="stat-value">{stat.value}</p>
-              {stat.change && (
-                <p className={`stat-change ${stat.trend}`}>
-                  <i className={`bi bi-arrow-${stat.trend}-right`}></i> {stat.change} vs last week
-                </p>
-              )}
+      <div className="grid-3" style={{ marginBottom: '24px' }}>
+        {data.quick_stats.map((stat, i) => {
+          const getTarget = (label = '') => {
+            const l = label.toLowerCase();
+            if (l.includes('revenue')) return { path: '/analytics' };
+            if (l.includes('order')) return { path: '/orders', state: { tab: 'HISTORY' } };
+            if (l.includes('waste')) return { path: '/food-waste' };
+            return { path: '/dashboard' };
+          };
+          const target = getTarget(stat.label);
+
+          return (
+            <div
+              key={i}
+              className="stat-card"
+              style={{
+                '--gradient': stat.color,
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              }}
+              onClick={() => navigate(target.path, { state: target.state })}
+              title={`Click to view ${stat.label}`}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <div>
+                <p className="stat-label">{stat.label}</p>
+                <p className="stat-value">{stat.value}</p>
+                {stat.change && (
+                  <p className={`stat-change ${stat.trend}`}>
+                    <i className={`bi bi-arrow-${stat.trend}-right`}></i> {stat.change} vs last week
+                  </p>
+                )}
+              </div>
+              <div className="stat-icon" style={{ background: `${stat.color}18`, color: stat.color, fontSize: '24px' }}>
+                <i className={`bi ${stat.icon}`}></i>
+              </div>
             </div>
-            <div className="stat-icon" style={{ background: `${stat.color}18`, color: stat.color, fontSize: '24px' }}>
-              <i className={`bi ${stat.icon}`}></i>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Charts Section */}
@@ -201,7 +230,7 @@ export default function Dashboard() {
               <h3 className="card-title">Orders Breakdown</h3>
               <p className="card-subtitle">Dine-in vs Delivery</p>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/orders')}>View Orders</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/orders', { state: { tab: 'HISTORY' } })}>View Orders</button>
           </div>
           <div style={{ height: '300px' }}>
             <Bar data={ordersData} options={chartOptions} />
@@ -244,61 +273,12 @@ export default function Dashboard() {
                   {rec.description}
                 </p>
                 {rec.action_text && (
-                  <button className="btn btn-sm btn-secondary" onClick={() => navigate('/ai-assistant')} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                  <button className="btn btn-sm btn-secondary" onClick={() => navigate(rec.action_link || '/ai-assistant')} style={{ background: 'var(--bg-card)', color: 'var(--text-primary)' }}>
                     {rec.action_text} <i className="bi bi-arrow-right-short"></i>
                   </button>
                 )}
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Low Stock Alerts */}
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">Low Stock Alerts</h3>
-              <p className="card-subtitle">Items requiring immediate restock</p>
-            </div>
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/inventory')}>View Inventory</button>
-          </div>
-
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Ingredient</th>
-                  <th>Current Stock</th>
-                  <th>Reorder Level</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.low_stock_items.map((item) => {
-                  const critical = item.quantity <= item.reorder_level / 2;
-                  return (
-                    <tr key={item.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.name}</td>
-                      <td>{item.quantity} {item.unit}</td>
-                      <td>{item.reorder_level} {item.unit}</td>
-                      <td>
-                        <span className={`badge ${critical ? 'badge-danger' : 'badge-warning'}`}>
-                          {critical ? 'Critical' : 'Low'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {data.low_stock_items.length === 0 && (
-                  <tr>
-                    <td colSpan={4} style={{ textAlign: 'center', padding: '32px' }}>
-                      <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}></i>
-                      Inventory levels are optimal
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>

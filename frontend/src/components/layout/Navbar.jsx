@@ -102,6 +102,17 @@ export default function Navbar({ collapsed, onToggle, theme, onThemeToggle }) {
 
       {/* Right — Actions */}
       <div className="navbar-right">
+        {/* Customer View Quick Button */}
+        <Link
+          to="/customer-dashboard"
+          className="btn btn-secondary btn-sm"
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', borderRadius: '16px', textDecoration: 'none' }}
+          title="Switch to Customer Dashboard"
+        >
+          <i className="bi bi-shop-window" style={{ color: 'var(--color-primary)' }}></i>
+          <span>Customer View</span>
+        </Link>
+
         {/* Theme Toggle */}
         <button
           id="theme-toggle-btn"

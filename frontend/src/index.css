@@ -1827,3 +1827,243 @@ input, textarea, select {
   .navbar-search { display: none; }
   .navbar-user-info { display: none; }
 }
+
+/* ─── Premium Glassmorphism Split Screen Auth Layout ───────────────── */
+
+.auth-split-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: #090a0f;
+  background-image: 
+    radial-gradient(circle at 10% 15%, rgba(249, 115, 22, 0.18) 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(217, 119, 6, 0.14) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.85) 0%, #090a0f 100%);
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+.auth-split-left {
+  flex: 1.15;
+  position: relative;
+  background: linear-gradient(135deg, rgba(9, 10, 15, 0.88) 0%, rgba(20, 24, 36, 0.82) 100%),
+              url('/images/login_hero.png') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 64px;
+  border-right: 1px solid rgba(249, 115, 22, 0.15);
+  overflow: hidden;
+}
+
+.auth-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(249, 115, 22, 0.12) 0%, transparent 60%),
+              linear-gradient(180deg, rgba(9, 10, 15, 0.5) 0%, rgba(9, 10, 15, 0.95) 100%);
+  z-index: 1;
+}
+
+/* Floating Ambient Glow Orbs */
+.auth-hero-glow-orb {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.25) 0%, transparent 70%);
+  filter: blur(50px);
+  pointer-events: none;
+  z-index: 1;
+  animation: pulse-glow 8s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(0.9) translate(0, 0); opacity: 0.6; }
+  100% { transform: scale(1.15) translate(20px, -20px); opacity: 0.9; }
+}
+
+.auth-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.auth-hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.auth-hero-logo-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f97316 0%, #d97706 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+  box-shadow: 0 10px 30px rgba(249, 115, 22, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: transform 0.3s ease;
+}
+
+.auth-hero-brand:hover .auth-hero-logo-icon {
+  transform: scale(1.06) rotate(-3deg);
+}
+
+.auth-hero-brand-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+  display: block;
+}
+
+.auth-hero-brand-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f97316;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.auth-hero-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #f97316 0%, #f59e0b 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.auth-feature-card:hover {
+  transform: translateX(8px);
+  border-color: rgba(249, 115, 22, 0.35);
+  background: rgba(249, 115, 22, 0.08);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3), 0 0 20px rgba(249, 115, 22, 0.1);
+}
+
+.auth-feature-card:hover::before {
+  opacity: 1;
+}
+
+.auth-feature-icon {
+  font-size: 26px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+  filter: drop-shadow(0 2px 8px rgba(249, 115, 22, 0.3));
+}
+
+.auth-feature-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px 0;
+}
+
+.auth-feature-card p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.auth-hero-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #cbd5e1;
+  padding: 10px 18px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 30px;
+  width: fit-content;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.auth-split-right {
+  flex: 0.85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+.auth-glass-card {
+  width: 100%;
+  max-width: 450px;
+  background: rgba(18, 20, 29, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 24px;
+  padding: 42px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6), 0 0 50px rgba(249, 115, 22, 0.08);
+  animation: fade-in 0.4s ease;
+  position: relative;
+}
+
+.auth-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f97316, #f59e0b, transparent);
+  border-radius: 2px;
+}
+
+@media (max-width: 992px) {
+  .auth-split-wrapper {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .auth-split-left {
+    padding: 44px 24px;
+    border-right: none;
+    border-bottom: 1px solid rgba(249, 115, 22, 0.15);
+  }
+  .auth-split-right {
+    padding: 36px 20px;
+  }
+  .auth-glass-card {
+    padding: 30px 24px;
+  }
+}

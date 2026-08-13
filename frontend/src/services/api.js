@@ -151,20 +151,12 @@ export const ordersAPI = {
 
 // ─── Customers API ──────────────────────────────────────────────────
 export const customersAPI = {
+  getMyDashboard: () => api.get('/api/v1/customers/me/dashboard'),
   list: (params) => api.get('/api/v1/customers/', { params }),
   getById: (id) => api.get(`/api/v1/customers/${id}`),
   create: (data) => api.post('/api/v1/customers/', data),
   update: (id, data) => api.put(`/api/v1/customers/${id}`, data),
   delete: (id) => api.delete(`/api/v1/customers/${id}`),
-};
-
-// ─── Inventory API ──────────────────────────────────────────────────
-export const inventoryAPI = {
-  list: (params) => api.get('/api/v1/inventory/', { params }),
-  getById: (id) => api.get(`/api/v1/inventory/${id}`),
-  create: (data) => api.post('/api/v1/inventory/', data),
-  update: (id, data) => api.put(`/api/v1/inventory/${id}`, data),
-  delete: (id) => api.delete(`/api/v1/inventory/${id}`),
 };
 
 // ─── Food Waste API ───────────────────────────────────────────────
@@ -216,6 +208,7 @@ export const aiAPI = {
   history: (params) => api.get('/api/v1/ai/history', { params }),
   getKnowledgeBase: () => api.get('/api/v1/ai/knowledge-base'),
   addKnowledgeDoc: (data) => api.post('/api/v1/ai/knowledge-base', data),
+  status: () => api.get('/api/v1/ai/status'),
 };
 
 // ─── Machine Learning Analytics API ──────────────────────────────────────

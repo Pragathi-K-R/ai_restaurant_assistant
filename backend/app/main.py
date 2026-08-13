@@ -35,12 +35,12 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"📊 Environment: {settings.ENVIRONMENT}")
-    # try:
-    #     await create_tables()
-    #     logger.info("✅ Database initialized successfully")
-    # except Exception as e:
-    #     logger.error(f"❌ Database initialization failed: {e}")
-    #     raise
+    try:
+        await create_tables()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        raise
 
     yield
 
@@ -60,7 +60,6 @@ A production-ready AI-powered restaurant management platform.
 - 🔐 JWT Authentication with Role-Based Access Control
 - 📊 Real-time Analytics and Business Intelligence  
 - 🤖 AI Knowledge Assistant powered by Google Gemini
-- 📦 Inventory Management with Low Stock Alerts
 - 🍽️ Order & Menu Management
 - 👥 Customer Segmentation & Analytics
 - 🗑️ Food Waste Tracking & Sustainability Reports
@@ -135,11 +134,10 @@ async def not_found_handler(request: Request, exc):
 
 @app.exception_handler(500)
 async def server_error_handler(request: Request, exc):
-    logger.error(f"Internal server error: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={"success": False, "message": "Internal server error"},
-    )
+    import traceback
+    error_trace = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    logger.error(f"Internal server error on {request.url.path}:\n{error_trace}")
+    raise exc
 
 
 # ─── Routers ──────────────────────────────────────────────────────────────────

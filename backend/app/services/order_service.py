@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
 from typing import Tuple, List, Optional
-from app.models.all_models import Order, OrderItem, OrderStatus, RecipeItem, Inventory
+from app.models.all_models import Order, OrderItem, OrderStatus
 from app.repositories.order_repository import OrderRepository
 from app.repositories.menu_repository import MenuRepository
 from app.schemas.order import OrderCreate, OrderUpdate, OrderResponse
@@ -22,41 +22,7 @@ class OrderService:
         self.repo = OrderRepository(db)
         self.menu_repo = MenuRepository(db)
 
-    async def _deduct_inventory(self, items: List[OrderItem]):
-        """Deducts ingredients from inventory based on order items."""
-        for item in items:
-            recipe_query = select(RecipeItem).where(RecipeItem.menu_item_id == item.menu_item_id)
-            recipe_result = await self.db.execute(recipe_query)
-            recipe_items = recipe_result.scalars().all()
-            
-            for recipe in recipe_items:
-                inv_query = select(Inventory).where(Inventory.id == recipe.inventory_id)
-                inv_result = await self.db.execute(inv_query)
-                inv_item = inv_result.scalar_one_or_none()
-                
-                if inv_item:
-                    deduct_qty = recipe.quantity_required * item.quantity
-                    inv_item.quantity = max(0.0, inv_item.quantity - deduct_qty)
-                    self.db.add(inv_item)
-                    logger.info(f"Deducted {deduct_qty} {inv_item.unit} of {inv_item.ingredient_name} for menu item {item.menu_item_id}")
 
-    async def _restore_inventory(self, items: List[OrderItem]):
-        """Restores ingredients to inventory when an order is cancelled."""
-        for item in items:
-            recipe_query = select(RecipeItem).where(RecipeItem.menu_item_id == item.menu_item_id)
-            recipe_result = await self.db.execute(recipe_query)
-            recipe_items = recipe_result.scalars().all()
-            
-            for recipe in recipe_items:
-                inv_query = select(Inventory).where(Inventory.id == recipe.inventory_id)
-                inv_result = await self.db.execute(inv_query)
-                inv_item = inv_result.scalar_one_or_none()
-                
-                if inv_item:
-                    restore_qty = recipe.quantity_required * item.quantity
-                    inv_item.quantity = inv_item.quantity + restore_qty
-                    self.db.add(inv_item)
-                    logger.info(f"Restored {restore_qty} {inv_item.unit} of {inv_item.ingredient_name} due to cancellation")
 
     async def create_order(self, user_id: int, data: OrderCreate) -> OrderResponse:
         subtotal = 0.0
@@ -90,12 +56,35 @@ class OrderService:
         tax_amount = subtotal_after_discount * TAX_RATE
         total_amount = subtotal_after_discount + tax_amount
 
-        # Create Order model
+        # Resolve target customer_id
+        target_customer_id = data.customer_id
+        if not target_customer_id and user_id:
+            from app.models.user import User
+            from app.models.all_models import Customer
+            from sqlalchemy import or_
+
+            user_res = await self.db.execute(select(User).where(User.id == user_id))
+            user_obj = user_res.scalar_one_or_none()
+
+            if user_obj:
+                cust_res = await self.db.execute(
+                    select(Customer).where(
+                        or_(Customer.email == user_obj.email, Customer.name == user_obj.full_name)
+                    )
+                )
+                cust_obj = cust_res.scalars().first()
+                if cust_obj:
+                    target_customer_id = cust_obj.id
+                else:
+                    first_cust = await self.db.execute(select(Customer).order_by(Customer.id.asc()).limit(1))
+                    c_first = first_cust.scalars().first()
+                    if c_first:
+                        target_customer_id = c_first.id
+
         order = Order(
             user_id=user_id,
-            customer_id=data.customer_id,
+            customer_id=target_customer_id,
             status=OrderStatus.PENDING,
-            table_number=data.table_number,
             total_amount=total_amount,
             discount=data.discount_amount,
             tax=tax_amount,
@@ -103,12 +92,19 @@ class OrderService:
         )
 
         created_order = await self.repo.create_order(order, db_items)
-        
-        # Perform inventory deduction
-        await self._deduct_inventory(db_items)
-        await self.db.flush()
-        
-        logger.info(f"Created order ID: {created_order.id} for ₹{total_amount}")
+
+        # Update Customer total_orders, total_spent, loyalty_points in DB
+        if target_customer_id:
+            from app.models.all_models import Customer
+            cust_to_update = await self.db.get(Customer, target_customer_id)
+            if cust_to_update:
+                cust_to_update.total_orders = (cust_to_update.total_orders or 0) + 1
+                cust_to_update.total_spent = float(cust_to_update.total_spent or 0) + float(total_amount)
+                cust_to_update.loyalty_points = (cust_to_update.loyalty_points or 0) + int(total_amount * 0.05)
+                await self.db.flush()
+
+        await self.db.commit()
+        logger.info(f"Created order ID: {created_order.id} for customer {target_customer_id} for ₹{total_amount}")
         return OrderResponse.model_validate(created_order)
 
     async def get_order(self, order_id: int) -> OrderResponse:
@@ -133,12 +129,5 @@ class OrderService:
         
         updated = await self.repo.update_status(order_id, new_status, data.notes)
         
-        # Handle stock modifications based on status changes
-        if new_status == OrderStatus.CANCELLED and old_status != OrderStatus.CANCELLED:
-            await self._restore_inventory(order.items)
-            await self.db.flush()
-        elif old_status == OrderStatus.CANCELLED and new_status != OrderStatus.CANCELLED:
-            await self._deduct_inventory(order.items)
-            await self.db.flush()
-            
+
         return OrderResponse.model_validate(updated)

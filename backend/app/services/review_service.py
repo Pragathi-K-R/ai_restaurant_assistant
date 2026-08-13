@@ -37,9 +37,8 @@ class ReviewService:
         # Check for Gemini API key configuration
         if settings.GOOGLE_API_KEY and settings.GOOGLE_API_KEY != "your-google-gemini-api-key-here":
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=settings.GOOGLE_API_KEY)
-                model = genai.GenerativeModel(settings.GEMINI_MODEL)
+                from google import genai
+                client = genai.Client(api_key=settings.GOOGLE_API_KEY)
 
                 prompt = (
                     "You are a sentiment analyzer. Analyze the sentiment of the following restaurant review. "
@@ -51,7 +50,10 @@ class ReviewService:
                     "Do not output anything else."
                 )
 
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                )
                 if response and response.text:
                     lines = [line.strip().lower() for line in response.text.split("\n") if line.strip()]
                     if len(lines) >= 2:

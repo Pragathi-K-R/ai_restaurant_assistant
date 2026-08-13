@@ -6,7 +6,7 @@ from app.models.user import User, UserRole
 from app.models.restaurant import Restaurant
 from app.models.all_models import (
     Customer, Order, OrderItem, OrderStatus, PaymentStatus,
-    Menu, FoodCategory, Inventory, Employee, Supplier,
+    Menu, FoodCategory, Employee, Supplier,
     FoodWaste,
 )
 from app.models.setting import Setting
@@ -17,7 +17,6 @@ __all__ = [
     "Customer",
     "Order", "OrderItem", "OrderStatus", "PaymentStatus",
     "Menu", "FoodCategory",
-    "Inventory",
     "Employee",
     "Supplier",
     "Review",

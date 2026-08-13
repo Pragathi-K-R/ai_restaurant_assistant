@@ -6,10 +6,10 @@ Aggregates metrics for the frontend dashboard using live database queries.
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, cast, Date
 from datetime import datetime, timedelta, timezone
-from app.models.all_models import Order, Customer, Inventory, OrderStatus, OrderType, FoodWaste
+from app.models.all_models import Order, Customer, OrderStatus, FoodWaste
 from app.schemas.dashboard import (
     DashboardResponse, StatCard, ChartData, ChartDataset, 
-    LowStockItem, AIRecommendation
+    AIRecommendation
 )
 import logging
 
@@ -35,11 +35,7 @@ class DashboardService:
         ord_result = await self.db.execute(ord_query)
         today_orders = ord_result.scalar() or 0
         
-        # Total Customers
-        cust_query = select(func.count(Customer.id))
-        cust_result = await self.db.execute(cust_query)
-        total_customers = cust_result.scalar() or 0
-        
+
         # Today's Food Waste
         waste_query = select(func.sum(FoodWaste.quantity_wasted)).where(FoodWaste.created_at >= today_start)
         waste_result = await self.db.execute(waste_query)
@@ -62,14 +58,7 @@ class DashboardService:
                 icon="bi-bag-check-fill",
                 color="var(--color-primary)"
             ),
-            StatCard(
-                label="Total Customers",
-                value=str(total_customers),
-                change="",
-                trend="up",
-                icon="bi-people-fill",
-                color="var(--color-secondary)"
-            ),
+
             StatCard(
                 label="Food Waste Today",
                 value=f"{today_waste:,.1f} kg",
@@ -137,47 +126,21 @@ class DashboardService:
             ]
         )
 
-        # 3. Low Stock Items
-        low_stock_query = select(Inventory).where(Inventory.quantity <= Inventory.reorder_level).limit(10)
-        low_stock_res = await self.db.execute(low_stock_query)
-        low_stock_results = low_stock_res.scalars().all()
-        
-        low_stock_items = [
-            LowStockItem(
-                id=item.id,
-                name=item.ingredient_name,
-                quantity=float(item.quantity),
-                unit=item.unit,
-                reorder_level=float(item.reorder_level)
-            ) for item in low_stock_results
-        ]
-
-        # 4. AI Recommendations (Derived from live data)
         ai_recommendations = []
-        if len(low_stock_items) > 0:
-            ai_recommendations.append(
-                AIRecommendation(
-                    title="Optimize Inventory: Critical Stock",
-                    description=f"{len(low_stock_items)} items are currently at or below reorder levels. Restock immediately to avoid menu item unavailability.",
-                    action_text="View Inventory",
-                    action_link="/inventory",
-                    type="warning"
-                )
+        ai_recommendations.append(
+            AIRecommendation(
+                title="Review Food Waste",
+                description=f"Today's food waste is {today_waste:,.1f} kg. Review recent logs to identify patterns.",
+                action_text="View Waste",
+                action_link="/food-waste",
+                type="info"
             )
-        else:
-             ai_recommendations.append(
-                AIRecommendation(
-                    title="Inventory Optimal",
-                    description="All inventory items are currently well-stocked above reorder levels. No immediate action required.",
-                    type="success"
-                )
-            )
+        )
 
         return DashboardResponse(
             quick_stats=quick_stats,
             revenue_chart=revenue_chart,
             orders_chart=orders_chart,
             customer_chart=revenue_chart,
-            low_stock_items=low_stock_items,
             ai_recommendations=ai_recommendations
         )

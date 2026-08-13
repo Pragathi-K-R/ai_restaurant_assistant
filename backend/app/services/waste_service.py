@@ -9,7 +9,6 @@ from typing import Tuple, List, Optional
 from datetime import date, datetime, timezone
 from app.models.all_models import FoodWaste
 from app.repositories.waste_repository import WasteRepository
-from app.repositories.inventory_repository import InventoryRepository
 from app.schemas.waste import WasteCreate, WasteUpdate, WasteResponse
 import logging
 
@@ -19,38 +18,17 @@ class WasteService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.repo = WasteRepository(db)
-        self.inventory_repo = InventoryRepository(db)
 
     def _map_to_response(self, waste: FoodWaste) -> WasteResponse:
         """Map a FoodWaste ORM instance to WasteResponse using model columns."""
         return WasteResponse.model_validate(waste)
 
     async def log_waste(self, user_id: int, data: WasteCreate) -> WasteResponse:
-        # If inventory_id provided, look up the item for cost calculation
         cost = 0.0
         ingredient_name = data.ingredient_name
         unit = data.unit
 
-        if data.inventory_id:
-            inv_item = await self.inventory_repo.get_by_id(data.inventory_id)
-            if not inv_item:
-                raise HTTPException(status_code=400, detail="Inventory item not found.")
-
-            unit_cost = float(inv_item.unit_cost or 0)
-            cost = data.quantity_wasted * unit_cost
-
-            # Use inventory item name/unit if not explicitly provided
-            if not ingredient_name:
-                ingredient_name = inv_item.ingredient_name
-            if not unit:
-                unit = inv_item.unit
-
-            # Deduct from inventory
-            new_qty = max(0, inv_item.quantity - data.quantity_wasted)
-            await self.inventory_repo.update(inv_item.id, quantity=new_qty)
-
         waste = FoodWaste(
-            inventory_id=data.inventory_id,
             ingredient_name=ingredient_name,
             quantity_wasted=data.quantity_wasted,
             unit=unit,

@@ -13,7 +13,7 @@ import os
 
 from app.core.config import settings
 from app.core.vector_db import vector_db
-from app.models.all_models import AILog, Inventory, FoodWaste, Order, OrderItem, Menu, Review, Customer
+from app.models.all_models import AILog, FoodWaste, Order, OrderItem, Menu, Review, Customer
 from app.repositories.ai_repository import AIRepository
 from app.schemas.ai import ChatRequest, ChatResponse, AILogResponse
 
@@ -27,38 +27,7 @@ class AIService:
 
     # ─── Live PostgreSQL Data Fetchers ────────────────────────────────────────
 
-    async def _get_inventory_context(self) -> str:
-        """Fetch live inventory data from PostgreSQL."""
-        try:
-            # Low stock items
-            low_q = select(Inventory).where(
-                Inventory.quantity <= Inventory.reorder_level,
-                Inventory.is_active == True
-            ).order_by(Inventory.quantity.asc()).limit(10)
-            low_res = await self.db.execute(low_q)
-            low_items = low_res.scalars().all()
 
-            # Total inventory count
-            count_q = select(func.count(Inventory.id)).where(Inventory.is_active == True)
-            count_res = await self.db.execute(count_q)
-            total = count_res.scalar() or 0
-
-            lines = [f"Total active inventory items: {total}"]
-            if low_items:
-                lines.append(f"LOW STOCK ALERT — {len(low_items)} items need immediate reorder:")
-                for item in low_items:
-                    lines.append(
-                        f"  • {item.ingredient_name}: {item.quantity:.1f} {item.unit} "
-                        f"(reorder at {item.reorder_level:.1f} {item.unit}) — "
-                        f"Supplier cost: ₹{item.unit_cost:.2f}/{item.unit}"
-                    )
-            else:
-                lines.append("All inventory items are above reorder levels. Stock is healthy.")
-
-            return "\n".join(lines)
-        except Exception as e:
-            logger.error(f"Inventory context error: {e}")
-            return "Inventory data temporarily unavailable."
 
     async def _get_waste_context(self) -> str:
         """Fetch recent food waste data from PostgreSQL."""
@@ -202,61 +171,7 @@ class AIService:
             return "Review data temporarily unavailable."
 
     # ─── Smart Fallback Response Generator ───────────────────────────────────
-
-    def _generate_intelligent_response(
-        self,
-        question: str,
-        chroma_context: str,
-        inventory_ctx: str,
-        waste_ctx: str,
-        sales_ctx: str,
-        reviews_ctx: str,
-    ) -> str:
-        """
-        Generate a structured, data-driven answer from PostgreSQL and ChromaDB data.
-        Used when Gemini API key is not configured. Response is based on REAL DB data only.
-        """
-        q = question.lower()
-
-        # Determine which data is most relevant
-        sections = []
-        sections.append(f"## 🤖 AI Operations Analysis\n*Based on live restaurant database data*\n")
-
-        if any(w in q for w in ["inventory", "stock", "ingredient", "reorder", "low", "supply"]):
-            sections.append(f"### 📦 Inventory Status\n{inventory_ctx}")
-
-        if any(w in q for w in ["waste", "food waste", "spoil", "expired", "throw", "discard", "reduce"]):
-            sections.append(f"### ♻️ Food Waste Analysis\n{waste_ctx}")
-            sections.append(
-                "### 💡 Waste Reduction Recommendations\n"
-                "Based on the waste data above:\n"
-                "- Flag ingredients nearing expiry daily for use in specials\n"
-                "- Log all prep waste in the Food Waste module before closing shift\n"
-                "- Review top waste reasons weekly to identify systemic issues\n"
-                "- Consider batch prep schedules to match actual demand patterns"
-            )
-
-        if any(w in q for w in ["sale", "revenue", "order", "perform", "popular", "menu", "best", "selling", "profit"]):
-            sections.append(f"### 💰 Sales & Performance\n{sales_ctx}")
-
-        if any(w in q for w in ["review", "customer", "sentiment", "feedback", "rating", "satisfaction"]):
-            sections.append(f"### ⭐ Customer Sentiment\n{reviews_ctx}")
-
-        # If no specific category matched, show all data
-        if len(sections) == 1:
-            sections.append(f"### 📊 Operations Overview\n{sales_ctx}\n\n{inventory_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}")
-
-        # Add ChromaDB knowledge if relevant
-        if chroma_context and chroma_context.strip():
-            sections.append(f"### 📚 Knowledge Base\n{chroma_context}")
-
-        sections.append(
-            "\n---\n*💡 To enable full Google Gemini AI reasoning, add your `GOOGLE_API_KEY` "
-            "to the backend `.env` file. Get a free key at [aistudio.google.com](https://aistudio.google.com/app/apikey)*"
-        )
-
-        return "\n\n".join(sections)
-
+    # Removed as per user request to handle Gemini failures properly.
     # ─── Main RAG Answer Method ───────────────────────────────────────────────
 
     async def answer_question(self, user_id: Optional[int], request: ChatRequest) -> ChatResponse:
@@ -264,12 +179,18 @@ class AIService:
         question = request.question
 
         # 1. ChromaDB vector retrieval
-        retrieved_items = vector_db.query(question, n_results=3)
-        context_texts = [item["text"] for item in retrieved_items]
-        chroma_context = "\n".join([f"- {text}" for text in context_texts])
+        context_texts = []
+        retrieved_items = []
+        chroma_context = ""
+        try:
+            retrieved_items = vector_db.query(question, n_results=3)
+            context_texts = [item["text"] for item in retrieved_items]
+            chroma_context = "\n".join([f"- {text}" for text in context_texts])
+        except Exception as e:
+            logger.error(f"ChromaDB retrieval failed: {e}")
+            chroma_context = "ChromaDB vector retrieval is currently unavailable."
 
         # 2. Live PostgreSQL data retrieval (parallel context building)
-        inventory_ctx = await self._get_inventory_context()
         waste_ctx = await self._get_waste_context()
         sales_ctx = await self._get_sales_context()
         reviews_ctx = await self._get_reviews_context()
@@ -278,48 +199,47 @@ class AIService:
         model_used = settings.GEMINI_MODEL
 
         # 3. Try Google Gemini if API key is configured
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or settings.GOOGLE_API_KEY
-        if api_key and api_key not in ("", "your-google-gemini-api-key-here"):
-            try:
-                import google.generativeai as genai
-                genai.configure(api_key=api_key)
-                model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        api_key = settings.GOOGLE_API_KEY
+        if not api_key or api_key == "your-google-gemini-api-key-here":
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail={"error_type": "GEMINI_CONFIGURATION_ERROR", "message": "Gemini AI is currently unavailable."})
 
-                prompt = (
-                    "You are the Intelligent Restaurant Operations Assistant for RestaurantAI. "
-                    "Answer the staff/manager question clearly and helpfully using the live data below. "
-                    "Be professional, structured, and concise. Use markdown formatting.\n\n"
-                    f"=== CHROMADB KNOWLEDGE BASE ===\n{chroma_context}\n\n"
-                    f"=== LIVE POSTGRESQL DATA ===\n"
-                    f"{inventory_ctx}\n\n"
-                    f"{waste_ctx}\n\n"
-                    f"{sales_ctx}\n\n"
-                    f"{reviews_ctx}\n\n"
-                    f"=== USER QUESTION ===\n{question}"
-                )
+        try:
+            from google import genai
+            client = genai.Client(api_key=api_key)
 
-                response = model.generate_content(prompt)
-                if response and response.text:
-                    answer = response.text
-                    model_used = settings.GEMINI_MODEL
-                    logger.info(f"Gemini response generated successfully for question: {question[:60]}")
-
-            except Exception as e:
-                logger.warning(f"Gemini API failed: {e}. Switching to intelligent DB-driven fallback.")
-                answer = ""
-
-        # 4. Intelligent fallback: real data-driven response (no fake/hardcoded answers)
-        if not answer:
-            model_used = "RestaurantAI-RAG-Engine (DB-Driven)"
-            answer = self._generate_intelligent_response(
-                question=question,
-                chroma_context=chroma_context,
-                inventory_ctx=inventory_ctx,
-                waste_ctx=waste_ctx,
-                sales_ctx=sales_ctx,
-                reviews_ctx=reviews_ctx,
+            prompt = (
+                "You are the Intelligent Restaurant Operations Assistant for RestaurantAI. "
+                "Answer the staff/manager question clearly and helpfully using the live data below. "
+                "You MUST format your response exactly using these four Markdown headers:\n"
+                "**Insight:** (Your main finding)\n"
+                "**Reason:** (Why this is happening)\n"
+                "**Evidence:** (Data points from the context. If data is missing or insufficient, state 'Insufficient evidence in the database.')\n"
+                "**Recommendation:** (Actionable advice)\n\n"
+                "CRITICAL: Do NOT invent or hallucinate statistics, numbers, or facts. Ground all findings in the provided context.\n\n"
+                f"=== CHROMADB KNOWLEDGE BASE ===\n{chroma_context}\n\n"
+                f"=== LIVE POSTGRESQL DATA ===\n"
+                f"{waste_ctx}\n\n"
+                f"{sales_ctx}\n\n"
+                f"{reviews_ctx}\n\n"
+                f"=== USER QUESTION ===\n{question}"
             )
-            logger.info(f"DB-driven RAG response generated for question: {question[:60]}")
+
+            response = client.models.generate_content(
+                model=settings.GEMINI_MODEL,
+                contents=prompt
+            )
+            if response and response.text:
+                answer = response.text
+                model_used = settings.GEMINI_MODEL
+                logger.info(f"Gemini response generated successfully for question: {question[:60]}")
+            else:
+                raise Exception("Empty response from Gemini")
+
+        except Exception as e:
+            logger.error(f"Gemini API failed: {e}")
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail={"error_type": "GEMINI_API_ERROR", "message": "Gemini AI is currently unavailable due to an API error."})
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 
