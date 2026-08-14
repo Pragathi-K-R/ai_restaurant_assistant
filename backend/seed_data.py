@@ -22,12 +22,25 @@ async def seed_database():
     print("[INFO] Initializing database schema...")
     
     async with AsyncSessionLocal() as session:
-        print("[INFO] Seeding default users (3)...")
+        print("[INFO] Seeding default users and customers (8)...")
         hashed_pwd = get_password_hash("Admin@123")
         admin = User(full_name="Admin Chef", email="admin@restaurant.com", hashed_password=hashed_pwd, role=UserRole.ADMIN, is_active=True, is_verified=True)
         manager = User(full_name="Bistro Manager", email="manager@restaurant.com", hashed_password=hashed_pwd, role=UserRole.MANAGER, is_active=True, is_verified=True)
         staff = User(full_name="Wait Staff", email="staff@restaurant.com", hashed_password=hashed_pwd, role=UserRole.STAFF, is_active=True, is_verified=True)
         session.add_all([admin, manager, staff])
+
+        # Seed customer users so they can log in
+        for i in range(1, 6):
+            c_user = User(
+                full_name=f"Customer {i}",
+                email=f"cust{i}@example.com",
+                hashed_password=hashed_pwd,
+                role=UserRole.CUSTOMER,
+                is_active=True,
+                is_verified=True
+            )
+            session.add(c_user)
+
         await session.flush()
 
         print("[INFO] Seeding suppliers (10)...")

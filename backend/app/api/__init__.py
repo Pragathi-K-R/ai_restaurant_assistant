@@ -29,6 +29,7 @@ api_router.include_router(orders_router)
 api_router.include_router(customers_router)
 
 api_router.include_router(waste_router)
+api_router.include_router(waste_router, prefix="/food-waste")
 api_router.include_router(employees_router)
 api_router.include_router(suppliers_router)
 api_router.include_router(reviews_router)

@@ -201,45 +201,56 @@ class AIService:
         # 3. Try Google Gemini if API key is configured
         api_key = settings.GOOGLE_API_KEY
         if not api_key or api_key == "your-google-gemini-api-key-here":
-            from fastapi import HTTPException
-            raise HTTPException(status_code=503, detail={"error_type": "GEMINI_CONFIGURATION_ERROR", "message": "Gemini AI is currently unavailable."})
-
-        try:
-            from google import genai
-            client = genai.Client(api_key=api_key)
-
-            prompt = (
-                "You are the Intelligent Restaurant Operations Assistant for RestaurantAI. "
-                "Answer the staff/manager question clearly and helpfully using the live data below. "
-                "You MUST format your response exactly using these four Markdown headers:\n"
-                "**Insight:** (Your main finding)\n"
-                "**Reason:** (Why this is happening)\n"
-                "**Evidence:** (Data points from the context. If data is missing or insufficient, state 'Insufficient evidence in the database.')\n"
-                "**Recommendation:** (Actionable advice)\n\n"
-                "CRITICAL: Do NOT invent or hallucinate statistics, numbers, or facts. Ground all findings in the provided context.\n\n"
-                f"=== CHROMADB KNOWLEDGE BASE ===\n{chroma_context}\n\n"
-                f"=== LIVE POSTGRESQL DATA ===\n"
-                f"{waste_ctx}\n\n"
-                f"{sales_ctx}\n\n"
-                f"{reviews_ctx}\n\n"
-                f"=== USER QUESTION ===\n{question}"
+            logger.warning("Gemini API key is not configured. Falling back to data analytics engine.")
+            model_used = "Data Analytics Engine (Offline Fallback)"
+            answer = (
+                f"**Insight:**\nAnalysis of active operational data for: '{question}'.\n\n"
+                f"**Reason:**\nLive database metrics retrieved from sales, inventory waste logs, and customer reviews.\n\n"
+                f"**Evidence:**\n{sales_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}\n\n"
+                f"**Recommendation:**\nMonitor top-selling dishes and optimize ingredient stock orders based on weekly sales patterns."
             )
+        else:
+            try:
+                from google import genai
+                client = genai.Client(api_key=api_key)
 
-            response = client.models.generate_content(
-                model=settings.GEMINI_MODEL,
-                contents=prompt
-            )
-            if response and response.text:
-                answer = response.text
-                model_used = settings.GEMINI_MODEL
-                logger.info(f"Gemini response generated successfully for question: {question[:60]}")
-            else:
-                raise Exception("Empty response from Gemini")
+                prompt = (
+                    "You are the Intelligent Restaurant Operations Assistant for RestaurantAI. "
+                    "Answer the staff/manager question clearly and helpfully using the live data below. "
+                    "You MUST format your response exactly using these four Markdown headers:\n"
+                    "**Insight:** (Your main finding)\n"
+                    "**Reason:** (Why this is happening)\n"
+                    "**Evidence:** (Data points from the context. If data is missing or insufficient, state 'Insufficient evidence in the database.')\n"
+                    "**Recommendation:** (Actionable advice)\n\n"
+                    "CRITICAL: Do NOT invent or hallucinate statistics, numbers, or facts. Ground all findings in the provided context.\n\n"
+                    f"=== CHROMADB KNOWLEDGE BASE ===\n{chroma_context}\n\n"
+                    f"=== LIVE POSTGRESQL DATA ===\n"
+                    f"{waste_ctx}\n\n"
+                    f"{sales_ctx}\n\n"
+                    f"{reviews_ctx}\n\n"
+                    f"=== USER QUESTION ===\n{question}"
+                )
 
-        except Exception as e:
-            logger.error(f"Gemini API failed: {e}")
-            from fastapi import HTTPException
-            raise HTTPException(status_code=503, detail={"error_type": "GEMINI_API_ERROR", "message": "Gemini AI is currently unavailable due to an API error."})
+                response = client.models.generate_content(
+                    model=settings.GEMINI_MODEL,
+                    contents=prompt
+                )
+                if response and response.text:
+                    answer = response.text
+                    model_used = settings.GEMINI_MODEL
+                    logger.info(f"Gemini response generated successfully for question: {question[:60]}")
+                else:
+                    raise Exception("Empty response from Gemini")
+
+            except Exception as e:
+                logger.warning(f"Gemini API unavailable or rate-limited: {e}. Generating data-grounded fallback analysis.")
+                model_used = "Data Analytics Engine (Offline Fallback)"
+                answer = (
+                    f"**Insight:**\nAnalysis of active operational data for: '{question}'.\n\n"
+                    f"**Reason:**\nLive database metrics retrieved from sales, inventory waste logs, and customer reviews.\n\n"
+                    f"**Evidence:**\n{sales_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}\n\n"
+                    f"**Recommendation:**\nMonitor top-selling dishes and optimize ingredient stock orders based on weekly sales patterns."
+                )
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 

@@ -73,14 +73,18 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Schema for refresh token endpoint."""
-    refresh_token: str
+    refresh_token: Optional[str] = None
+    refreshToken: Optional[str] = None
+    token: Optional[str] = None
 
 
 class AccessTokenResponse(BaseModel):
     """Schema for refreshed access token."""
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     expires_in: int
+
 
 
 class ForgotPasswordRequest(BaseModel):

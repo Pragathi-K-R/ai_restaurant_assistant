@@ -8,51 +8,47 @@ import { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-// Navigation menu configuration
-const NAV_SECTIONS = [
+// Navigation configurations for each role
+const ADMIN_NAV_SECTIONS = [
   {
     title: 'Overview',
     items: [
-      { path: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2', roles: ['admin', 'manager', 'staff'] },
-      { path: '/customer-dashboard', label: 'Customer Portal', icon: 'bi-shop-window', badge: 'NEW', roles: ['admin', 'manager', 'staff', 'customer'] },
+      { path: '/admin/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { path: '/orders', label: 'Orders', icon: 'bi-bag-fill', badge: null, roles: ['admin', 'manager', 'staff'] },
-      { path: '/menu', label: 'Menu', icon: 'bi-journal-richtext', roles: ['admin', 'manager', 'staff'] },
-      { path: '/customers', label: 'Customers', icon: 'bi-people-fill', roles: ['admin', 'manager', 'staff'] },
-    ],
-  },
-  {
-    title: 'Management',
-    items: [
-      { path: '/employees', label: 'Employees', icon: 'bi-person-badge', roles: ['admin', 'manager'] },
-      { path: '/suppliers', label: 'Suppliers', icon: 'bi-truck', roles: ['admin', 'manager'] },
+      { path: '/admin/orders', label: 'Orders', icon: 'bi-bag-fill' },
+      { path: '/admin/menu', label: 'Menu Management', icon: 'bi-journal-richtext' },
     ],
   },
   {
     title: 'Insights',
     items: [
-      { path: '/analytics', label: 'Analytics', icon: 'bi-bar-chart-fill', roles: ['admin', 'manager'] },
-      { path: '/reports', label: 'Reports', icon: 'bi-file-earmark-bar-graph-fill', roles: ['admin', 'manager'] },
-      { path: '/reviews', label: 'Reviews', icon: 'bi-star-fill', roles: ['admin', 'manager', 'staff', 'customer'] },
-      { path: '/food-waste', label: 'Food Waste', icon: 'bi-recycle', roles: ['admin', 'manager'] },
+      { path: '/admin/reviews', label: 'Reviews', icon: 'bi-star-fill' },
+      { path: '/admin/analytics', label: 'Sales & Trends', icon: 'bi-bar-chart-fill' },
+      { path: '/admin/food-waste', label: 'Sustainable Food Waste', icon: 'bi-recycle' },
     ],
   },
   {
     title: 'AI Features',
     items: [
-      { path: '/ai-assistant', label: 'AI Assistant', icon: 'bi-robot', badge: 'new', roles: ['admin', 'manager', 'staff', 'customer'] },
-      { path: '/knowledge-base', label: 'Knowledge Base', icon: 'bi-database-fill', roles: ['admin', 'manager'] },
+      { path: '/admin/ai', label: 'AI Assistant', icon: 'bi-robot', badge: 'new' },
     ],
   },
+];
+
+const CUSTOMER_NAV_SECTIONS = [
   {
-    title: 'Settings',
+    title: 'Customer Portal',
     items: [
-      { path: '/profile', label: 'My Profile', icon: 'bi-person-circle', roles: ['admin', 'manager', 'staff', 'customer'] },
-      { path: '/settings', label: 'Settings', icon: 'bi-gear-fill', roles: ['admin'] },
+      { path: '/customer/dashboard', label: 'Home', icon: 'bi-house-fill' },
+      { path: '/customer/menu', label: 'Menu', icon: 'bi-journal-richtext' },
+      { path: '/customer/cart', label: 'Cart', icon: 'bi-cart-fill' },
+      { path: '/customer/orders', label: 'My Orders', icon: 'bi-clock-history' },
+      { path: '/customer/reviews', label: 'Reviews', icon: 'bi-star-fill' },
+      { path: '/customer/profile', label: 'Profile', icon: 'bi-person-circle' },
     ],
   },
 ];
@@ -62,10 +58,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   const location = useLocation();
   const userRole = user?.role || 'customer';
 
-  const filteredSections = NAV_SECTIONS.map(section => ({
-    ...section,
-    items: section.items.filter(item => !item.roles || item.roles.includes(userRole)),
-  })).filter(section => section.items.length > 0);
+  const filteredSections = userRole === 'customer' ? CUSTOMER_NAV_SECTIONS : ADMIN_NAV_SECTIONS;
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`} id="main-sidebar">

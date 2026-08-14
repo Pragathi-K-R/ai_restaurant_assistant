@@ -70,3 +70,17 @@ async def delete_waste(
 ):
     service = WasteService(db)
     return await service.delete_waste(waste_id)
+
+@router.put(
+    "/{waste_id}",
+    response_model=WasteResponse,
+    summary="Update a waste record",
+)
+async def update_waste(
+    waste_id: int,
+    data: WasteCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    service = WasteService(db)
+    return await service.update_waste(waste_id, data)

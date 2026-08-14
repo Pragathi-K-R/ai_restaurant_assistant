@@ -97,7 +97,11 @@ class VectorDBManager:
             logger.error(f"Failed to seed ChromaDB: {e}")
 
     def query(self, query_text: str, n_results: int = 3) -> List[Dict[str, Any]]:
-        self.initialize()
+        try:
+            self.initialize()
+        except Exception as e:
+            logger.error(f"ChromaDB initialization failed in query: {e}")
+
         if self.collection:
             try:
                 results = self.collection.query(query_texts=[query_text], n_results=n_results)

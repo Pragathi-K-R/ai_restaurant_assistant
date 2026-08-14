@@ -17,7 +17,10 @@ class OrderItemCreate(OrderItemBase):
 
 class OrderItemResponse(OrderItemBase):
     id: int
-    price_at_time: float
+    unit_price: float = 0.0
+    total_price: float = 0.0
+    price_at_time: float = 0.0
+    item_name: Optional[str] = None
     menu_item: Optional[MenuResponse] = None
 
     model_config = {"from_attributes": True}

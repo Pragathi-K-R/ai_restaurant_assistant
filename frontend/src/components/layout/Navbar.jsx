@@ -4,13 +4,14 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Navbar({ collapsed, onToggle, theme, onThemeToggle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,16 +103,30 @@ export default function Navbar({ collapsed, onToggle, theme, onThemeToggle }) {
 
       {/* Right — Actions */}
       <div className="navbar-right">
-        {/* Customer View Quick Button */}
-        <Link
-          to="/customer-dashboard"
-          className="btn btn-secondary btn-sm"
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', borderRadius: '16px', textDecoration: 'none' }}
-          title="Switch to Customer Dashboard"
-        >
-          <i className="bi bi-shop-window" style={{ color: 'var(--color-primary)' }}></i>
-          <span>Customer View</span>
-        </Link>
+        {/* Switch View Button for Admins */}
+        {user?.role !== 'customer' && (
+          location.pathname.startsWith('/customer') ? (
+            <Link
+              to="/admin/dashboard"
+              className="btn btn-primary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', borderRadius: '16px', textDecoration: 'none' }}
+              title="Return to Admin Dashboard"
+            >
+              <i className="bi bi-shield-fill" style={{ color: '#fff' }}></i>
+              <span>Admin View</span>
+            </Link>
+          ) : (
+            <Link
+              to="/customer/dashboard"
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', borderRadius: '16px', textDecoration: 'none' }}
+              title="Switch to Customer Dashboard"
+            >
+              <i className="bi bi-shop-window" style={{ color: 'var(--color-primary)' }}></i>
+              <span>Customer View</span>
+            </Link>
+          )
+        )}
 
         {/* Theme Toggle */}
         <button

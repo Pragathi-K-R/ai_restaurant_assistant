@@ -61,10 +61,12 @@ export default function Login() {
 
       // Determine redirect path based on user role
       const userRole = res?.user?.role || JSON.parse(localStorage.getItem('user') || '{}')?.role;
-      let destination = from && from !== '/login' ? from : '/dashboard';
+      let destination = from && from !== '/login' ? from : '/admin/dashboard';
 
       if (userRole === 'customer') {
-        destination = '/customer-dashboard';
+        destination = '/customer/dashboard';
+      } else if (userRole === 'admin' || userRole === 'manager' || userRole === 'staff') {
+        destination = '/admin/dashboard';
       }
 
       navigate(destination, { replace: true });

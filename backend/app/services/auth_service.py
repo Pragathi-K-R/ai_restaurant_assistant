@@ -130,43 +130,65 @@ class AuthService:
         Issue a new access token using a valid refresh token.
         
         Returns:
-            Dict with new access_token
+            Dict with new access_token and refresh_token
         
         Raises:
             HTTPException 401 if refresh token is invalid
         """
-        payload = decode_token(refresh_token)
+        if not refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        payload = verify_refresh_token(refresh_token)
         if not payload:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired refresh token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        if payload.get("type") != "refresh":
+
+        user_id = payload.get("sub")
+        if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
+                detail="Invalid or expired refresh token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        user_id = payload.get("sub")
-        user = await self.repo.get_by_id(int(user_id))
+        try:
+            uid = int(user_id)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user = await self.repo.get_by_id(uid)
         if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found or inactive"
+                detail="User not found or inactive",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
+        user_role = user.role.value if hasattr(user.role, 'value') else str(user.role)
         new_access_token = create_access_token(
             subject=user.id,
-            role=user.role.value,
+            role=user_role,
         )
+        new_refresh_token = create_refresh_token(subject=user.id)
 
         return {
             "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
             "token_type": "bearer",
             "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         }
+
 
     async def change_password(
         self,

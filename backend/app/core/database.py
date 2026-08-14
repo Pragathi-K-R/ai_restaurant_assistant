@@ -10,6 +10,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
+
 # Create async engine with driver auto-detection
 engine_kwargs = {"echo": settings.DEBUG}
 
@@ -18,6 +20,16 @@ if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
 elif db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+if "postgresql+asyncpg" in db_url:
+    parsed = urlparse(db_url)
+    params = dict(parse_qsl(parsed.query))
+    if "sslmode" in params or "ssl" not in params:
+        params["ssl"] = params.get("sslmode", "require")
+    params.pop("sslmode", None)
+    params.pop("channel_binding", None)
+    new_query = urlencode(params)
+    db_url = urlunparse(parsed._replace(query=new_query))
 
 if "postgresql" in db_url:
     engine_kwargs.update({

@@ -10,7 +10,7 @@ import { customersAPI, menuAPI, ordersAPI, reviewsAPI, aiAPI } from '../services
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
-export default function CustomerDashboard() {
+export default function CustomerDashboard({ activeTab: propActiveTab }) {
   const { user } = useAuth();
   
   // Real Data States
@@ -20,7 +20,13 @@ export default function CustomerDashboard() {
   const [loadingMenu, setLoadingMenu] = useState(false);
   
   // Navigation Tabs
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'menu', 'orders', 'favorites', 'reviews', 'assistant'
+  const [activeTab, setActiveTab] = useState(propActiveTab || 'overview');
+
+  useEffect(() => {
+    if (propActiveTab) {
+      setActiveTab(propActiveTab);
+    }
+  }, [propActiveTab]);
   
   // Filters & Search
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -32,6 +38,7 @@ export default function CustomerDashboard() {
   const [orderType, setOrderType] = useState('dine-in'); // 'dine-in', 'pickup', 'delivery'
   const [tableNumber, setTableNumber] = useState('Table 4');
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [cartDiscount, setCartDiscount] = useState(0);
   
   // AI Assistant State
   const [aiQuery, setAiQuery] = useState('');
@@ -43,6 +50,7 @@ export default function CustomerDashboard() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   // Redeem Rewards Modal State
   const [showRedeemModal, setShowRedeemModal] = useState(false);
@@ -61,6 +69,12 @@ export default function CustomerDashboard() {
     loadDashboardData();
     loadMenuItems();
   }, []);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      setCartDiscount(0);
+    }
+  }, [cart]);
 
   useEffect(() => {
     if (user && aiMessages.length === 0) {
@@ -115,6 +129,25 @@ export default function CustomerDashboard() {
     toast.success(`Added "${dish.name}" to order! 🛒`);
   };
 
+  const addComboToCart = (items, comboName, discountAmount) => {
+    setCart((prev) => {
+      let newCart = [...prev];
+      items.forEach((dish) => {
+        const existing = newCart.find((item) => item.id === dish.id);
+        if (existing) {
+          newCart = newCart.map((item) =>
+            item.id === dish.id ? { ...item, quantity: item.quantity + 1 } : item
+          );
+        } else {
+          newCart.push({ ...dish, quantity: 1 });
+        }
+      });
+      return newCart;
+    });
+    setCartDiscount((prev) => prev + discountAmount);
+    toast.success(`🎉 Added "${comboName}" to cart! Combo items bundled at a 30% discount.`);
+  };
+
   const updateCartQuantity = (id, delta) => {
     setCart((prev) =>
       prev
@@ -142,21 +175,21 @@ export default function CustomerDashboard() {
     try {
       const orderPayload = {
         customer_id: dashboardData?.profile?.id || null,
-        order_type: orderType,
-        table_number: orderType === 'dine-in' ? tableNumber : null,
         items: cart.map((c) => ({
           menu_item_id: c.id,
           quantity: c.quantity,
           unit_price: c.price,
           notes: '',
         })),
-        total_amount: cartTotal,
+        discount_amount: cartDiscount,
+        total_amount: Math.max(0, cartTotal - cartDiscount),
         customer_name: dashboardData?.profile?.name || user?.full_name || 'Customer',
       };
 
       await ordersAPI.create(orderPayload);
       toast.success('Order placed successfully! 🍕 Your order ticket is live in the kitchen.');
       setCart([]);
+      setCartDiscount(0);
       setShowCartDrawer(false);
       await loadDashboardData(); // Refresh metrics from database
       setActiveTab('orders');
@@ -182,10 +215,12 @@ export default function CustomerDashboard() {
         comment: reviewComment,
         customer_name: dashboardData?.profile?.name || user?.full_name || 'Guest Customer',
         customer_id: dashboardData?.profile?.id,
+        order_id: selectedOrderId,
       });
       toast.success('Thank you! Your review has been recorded. ⭐');
       setShowReviewModal(false);
       setReviewComment('');
+      setSelectedOrderId(null);
       loadDashboardData(); // Refresh reviews list
     } catch (err) {
       console.error('Error submitting review:', err);
@@ -247,6 +282,21 @@ export default function CustomerDashboard() {
   const favoriteItems = dashboardData?.favorite_items || [];
   const reviewsList = dashboardData?.customer_reviews || [];
   const recommendations = dashboardData?.recommendations || [];
+
+  // Compute Trendyy Food (popular items)
+  const trendyFood = [...menuItems]
+    .sort((a, b) => (b.total_orders || 0) - (a.total_orders || 0))
+    .slice(0, 3);
+
+  // Compute Least Ordered Food (unpopular items for combo bundling)
+  const leastOrdered = [...menuItems]
+    .filter(item => item.is_available)
+    .sort((a, b) => (a.total_orders || 0) - (b.total_orders || 0))
+    .slice(0, 3);
+
+  const regularComboSum = leastOrdered.reduce((sum, item) => sum + (item.price || 0), 0);
+  const comboDiscount = Math.round(regularComboSum * 0.3); // 30% discount
+  const discountedComboPrice = regularComboSum - comboDiscount;
 
   // Filter menu items
   const filteredMenu = menuItems.filter((item) => {
@@ -322,11 +372,7 @@ export default function CustomerDashboard() {
               Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
             </button>
 
-            <button className="btn btn-secondary" onClick={() => setShowReservationModal(true)}>
-              <i className="bi bi-calendar-event" style={{ marginRight: '6px' }}></i> Book Table
-            </button>
-
-            <button className="btn btn-ghost" onClick={() => setShowReviewModal(true)}>
+            <button className="btn btn-ghost" onClick={() => { setSelectedOrderId(null); setShowReviewModal(true); }}>
               <i className="bi bi-star-fill" style={{ color: 'var(--color-warning)', marginRight: '6px' }}></i> Leave Feedback
             </button>
           </div>
@@ -507,28 +553,6 @@ export default function CustomerDashboard() {
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
                 <div
-                  style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid var(--color-success)', cursor: 'pointer' }}
-                  onClick={() => setActiveTab('orders')}
-                  title="Click to view Recent Orders history"
-                >
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Delivered Orders</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>
-                    {orderStats.delivered || orderStats.completed || 0}
-                  </div>
-                </div>
-
-                <div
-                  style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid var(--color-info)', cursor: 'pointer' }}
-                  onClick={() => setActiveTab('orders')}
-                  title="Click to view Recent Orders history"
-                >
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Preparing Orders</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '4px' }}>
-                    {orderStats.preparing || 0}
-                  </div>
-                </div>
-
-                <div
                   style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)', borderLeft: '4px solid var(--color-warning)', cursor: 'pointer' }}
                   onClick={() => setActiveTab('orders')}
                   title="Click to view Recent Orders history"
@@ -584,25 +608,31 @@ export default function CustomerDashboard() {
             </div>
           </div>
 
-          {/* Personalized Menu Recommendations Section */}
+          {/* Trendyy Food Section */}
           <div className="card">
-            <div className="card-header">
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <h3 className="card-title">Chef's Recommendations for You ⭐</h3>
-                <p className="card-subtitle">Top-rated signature dishes from our database</p>
+                <h3 className="card-title">Trendyy Food 🔥</h3>
+                <p className="card-subtitle">Most popular dishes ordered by food lovers</p>
               </div>
+              <span className="badge badge-warning" style={{ background: 'var(--gradient-primary)', color: 'white' }}>Trending Now</span>
             </div>
 
             <div className="grid-3" style={{ gap: '16px' }}>
-              {recommendations.slice(0, 3).map((dish) => (
-                <div key={dish.id} style={{ padding: '16px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{dish.name}</h4>
-                    <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '15px' }}>₹{dish.price}</span>
+              {trendyFood.map((dish) => (
+                <div key={dish.id} style={{ padding: '16px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{dish.name}</h4>
+                      <span style={{ fontWeight: 800, color: 'var(--color-primary)', fontSize: '15px' }}>₹{Number(dish.price).toFixed(2)}</span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
+                      {dish.description || 'Very popular customer favorite dish.'}
+                    </p>
+                    <div style={{ fontSize: '11px', color: 'var(--color-warning)', fontWeight: 700, marginBottom: '12px' }}>
+                      🔥 {dish.total_orders || 0} Orders placed recently
+                    </div>
                   </div>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '12px' }}>
-                    {dish.description || 'Delicious chef signature dish made with fresh ingredients.'}
-                  </p>
                   <button className="btn btn-secondary btn-sm btn-block" onClick={() => addToCart(dish)}>
                     <i className="bi bi-plus-circle-fill" style={{ marginRight: '4px' }}></i> Add to Order
                   </button>
@@ -610,6 +640,45 @@ export default function CustomerDashboard() {
               ))}
             </div>
           </div>
+
+          {/* Combo Offer (Least Ordered Promo Combo) Section */}
+          {leastOrdered.length === 3 && (
+            <div className="card" style={{ border: '2px dashed var(--color-success)', background: 'rgba(16, 185, 129, 0.04)' }}>
+              <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h3 className="card-title" style={{ color: 'var(--color-success)' }}>Exclusive Smart Combo Offer 🎁</h3>
+                  <p className="card-subtitle">Discover our hidden culinary gems bundled at a 30% discount!</p>
+                </div>
+                <span className="badge badge-success" style={{ padding: '4px 10px', fontWeight: 700 }}>Save 30%</span>
+              </div>
+
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap', padding: '16px' }}>
+                <div style={{ flex: 1, minWidth: '280px' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '16px', fontWeight: 800 }}>Chef's Special "Hidden Gems" Combo</h4>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '14px', lineHeight: '1.5' }}>
+                    Enjoy a premium combination of our unique dishes: <strong>{leastOrdered.map(d => d.name).join(', ')}</strong>. Repackaged into a promotional feast to give everyone a taste of everything!
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    <div>
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)', textDecoration: 'line-through' }}>₹{regularComboSum.toFixed(2)}</span>
+                      <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--color-success)', marginLeft: '8px' }}>₹{discountedComboPrice.toFixed(2)}</span>
+                    </div>
+                    <span className="badge badge-success" style={{ fontSize: '11px' }}>Limited Time Only</span>
+                  </div>
+                </div>
+
+                <button 
+                  className="btn btn-primary" 
+                  onClick={() => {
+                    addComboToCart(leastOrdered, "Hidden Gems Combo", comboDiscount);
+                  }}
+                  style={{ background: 'var(--color-success)', border: 'none', padding: '12px 24px', borderRadius: 'var(--radius-sm)', fontWeight: 700 }}
+                >
+                  🚀 Get Combo Deal (Save ₹{comboDiscount})
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
       )}
@@ -747,6 +816,24 @@ export default function CustomerDashboard() {
                       </ul>
                     </div>
                   )}
+
+                  {/* Review Trigger Button for Delivered Orders */}
+                  {ord.status?.toLowerCase() === 'delivered' && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed var(--border-default)' }}>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          setSelectedOrderId(ord.id);
+                          setReviewRating(5);
+                          setReviewComment('');
+                          setShowReviewModal(true);
+                        }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', fontSize: '12px' }}
+                      >
+                        <i className="bi bi-star-fill" style={{ color: 'var(--color-warning)' }}></i> Rate & Review Order
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -814,30 +901,78 @@ export default function CustomerDashboard() {
               <h3 style={{ marginTop: '12px' }}>No reviews posted yet</h3>
               <p style={{ color: 'var(--text-secondary)' }}>Share your dining feedback to help us improve our service!</p>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {reviewsList.map((rev) => (
-                <div key={rev.id} className="card" style={{ borderLeft: '4px solid var(--color-warning)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', gap: '4px', fontSize: '18px', color: 'var(--color-warning)' }}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <i key={star} className={`bi bi-star${star <= rev.rating ? '-fill' : ''}`}></i>
-                      ))}
-                    </div>
-                    <span className="badge badge-secondary" style={{ textTransform: 'capitalize' }}>
-                      {rev.sentiment || 'positive'}
-                    </span>
+          ) : (() => {
+            const positiveReviews = reviewsList.filter(rev => rev.rating >= 3);
+            const criticalReviews = reviewsList.filter(rev => rev.rating <= 2 || rev.sentiment === 'negative');
+            
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'flex-start' }}>
+                {/* Left Column: Positive & Neutral */}
+                <div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="bi bi-emoji-smile-fill"></i> Positive & Neutral (3★ and Above) ({positiveReviews.length})
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {positiveReviews.map((rev) => (
+                      <div key={rev.id} className="card" style={{ borderLeft: '4px solid var(--color-success)', padding: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', gap: '2px', fontSize: '14px', color: 'var(--color-warning)' }}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <i key={star} className={`bi bi-star${star <= rev.rating ? '-fill' : ''}`}></i>
+                            ))}
+                          </div>
+                          <span className="badge badge-success" style={{ fontSize: '10px', textTransform: 'capitalize' }}>
+                            {rev.sentiment || 'positive'}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: '6px 0', lineHeight: 1.5 }}>
+                          "{rev.comment}"
+                        </p>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Posted on {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : 'Recently'}
+                        </span>
+                      </div>
+                    ))}
+                    {positiveReviews.length === 0 && (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No positive feedback yet.</p>
+                    )}
                   </div>
-                  <p style={{ fontSize: '14px', color: 'var(--text-primary)', margin: '8px 0', lineHeight: 1.6 }}>
-                    "{rev.comment}"
-                  </p>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    Posted on {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : 'Recently'}
-                  </span>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* Right Column: Critical & Negatives */}
+                <div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, marginBottom: '12px', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <i className="bi bi-emoji-frown-fill"></i> Critical & Negatives (2★ and Below / Negative) ({criticalReviews.length})
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {criticalReviews.map((rev) => (
+                      <div key={rev.id} className="card" style={{ borderLeft: '4px solid var(--color-danger)', padding: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', gap: '2px', fontSize: '14px', color: 'var(--color-warning)' }}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <i key={star} className={`bi bi-star${star <= rev.rating ? '-fill' : ''}`}></i>
+                            ))}
+                          </div>
+                          <span className="badge badge-danger" style={{ fontSize: '10px', textTransform: 'capitalize' }}>
+                            {rev.sentiment || 'negative'}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-primary)', margin: '6px 0', lineHeight: 1.5 }}>
+                          "{rev.comment}"
+                        </p>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          Posted on {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : 'Recently'}
+                        </span>
+                      </div>
+                    ))}
+                    {criticalReviews.length === 0 && (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No critical feedback yet.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -909,24 +1044,7 @@ export default function CustomerDashboard() {
               </button>
             </div>
 
-            <div style={{ marginBottom: '16px', display: 'flex', gap: '10px' }}>
-              <select className="form-input" value={orderType} onChange={(e) => setOrderType(e.target.value)}>
-                <option value="dine-in">🍽️ Dine-In</option>
-                <option value="pickup">🛍️ Takeaway / Pickup</option>
-                <option value="delivery">🛵 Home Delivery</option>
-              </select>
-
-              {orderType === 'dine-in' && (
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Table #"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  style={{ width: '110px' }}
-                />
-              )}
-            </div>
+            {/* Order type and table number inputs removed completely */}
 
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {cart.length === 0 ? (
@@ -956,9 +1074,15 @@ export default function CustomerDashboard() {
 
             {cart.length > 0 && (
               <div style={{ borderTop: '1px solid var(--border-default)', paddingTop: '16px', marginTop: '16px' }}>
+                {cartDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-success)', marginBottom: '8px' }}>
+                    <span>Promo Combo Discount:</span>
+                    <span>-₹{cartDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 800, marginBottom: '16px' }}>
                   <span>Total Amount:</span>
-                  <span style={{ color: 'var(--color-primary)' }}>₹{cartTotal.toFixed(2)}</span>
+                  <span style={{ color: 'var(--color-primary)' }}>₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}</span>
                 </div>
 
                 <button className="btn btn-primary btn-block btn-lg" onClick={handlePlaceOrder} disabled={isSubmittingOrder}>
@@ -974,7 +1098,7 @@ export default function CustomerDashboard() {
       {showReviewModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div className="card" style={{ width: '90%', maxWidth: '440px' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '12px' }}>Leave Feedback ⭐</h3>
+            <h3 style={{ marginTop: 0, marginBottom: '12px' }}>{selectedOrderId ? `Rate Order #${selectedOrderId}` : 'Leave Feedback'} ⭐</h3>
             <form onSubmit={handleSubmitReview}>
               <div style={{ display: 'flex', gap: '8px', fontSize: '28px', color: 'var(--color-warning)', marginBottom: '16px', justifyContent: 'center', cursor: 'pointer' }}>
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -1018,35 +1142,7 @@ export default function CustomerDashboard() {
         </div>
       )}
 
-      {/* ─── TABLE RESERVATION MODAL ────────────────────────────────────── */}
-      {showReservationModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="card" style={{ width: '90%', maxWidth: '460px' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '16px' }}>Reserve a Table 📅</h3>
-            <form onSubmit={handleReservationSubmit}>
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label className="form-label">Date</label>
-                <input type="date" className="form-input" value={reservationData.date} onChange={(e) => setReservationData({ ...reservationData, date: e.target.value })} />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label className="form-label">Time</label>
-                <input type="time" className="form-input" value={reservationData.time} onChange={(e) => setReservationData({ ...reservationData, time: e.target.value })} />
-              </div>
-
-              <div className="form-group" style={{ marginBottom: '12px' }}>
-                <label className="form-label">Party Size</label>
-                <input type="number" min="1" max="20" className="form-input" value={reservationData.partySize} onChange={(e) => setReservationData({ ...reservationData, partySize: e.target.value })} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn btn-ghost" onClick={() => setShowReservationModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Confirm Table Reservation</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Table Reservation Modal removed completely */}
 
     </div>
   );

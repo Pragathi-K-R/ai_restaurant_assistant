@@ -137,11 +137,14 @@ export default function Orders() {
   };
 
   const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'PENDING': return 'badge-warning';
-      case 'COMPLETED': return 'badge-success';
-      case 'CANCELLED': return 'badge-danger';
-      default: return '';
+    const s = String(status).toLowerCase();
+    switch (s) {
+      case 'pending': return 'badge-warning';
+      case 'preparing': return 'badge-info';
+      case 'ready': return 'badge-primary';
+      case 'delivered': return 'badge-success';
+      case 'cancelled': return 'badge-danger';
+      default: return 'badge-secondary';
     }
   };
 
@@ -313,7 +316,12 @@ export default function Orders() {
                   <tr key={order.id}>
                     <td style={{ fontWeight: 700 }}>#{order.id}</td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{new Date(order.created_at).toLocaleString()}</td>
-                    <td>{order.items?.length || 0} items</td>
+                     <td>
+                       <div style={{ fontWeight: 600 }}>{order.items?.length || 0} items</div>
+                       <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', maxWidth: '220px', lineHeight: '1.4' }}>
+                         {order.items?.map(item => `${item.quantity}x ${item.item_name || (item.menu_item?.name) || `Dish #${item.menu_item_id}`}`).join(', ')}
+                       </div>
+                     </td>
                     <td style={{ fontWeight: 700 }}>₹{Number(order.total_amount || 0).toFixed(2)}</td>
                     <td><span className={`badge ${getStatusBadgeClass(order.status)}`}>{order.status}</span></td>
                     <td>
@@ -324,9 +332,11 @@ export default function Orders() {
                           value={order.status}
                           onChange={(e) => updateOrderStatus(order.id, e.target.value)}
                         >
-                          <option value="PENDING">Pending</option>
-                          <option value="COMPLETED">Completed</option>
-                          <option value="CANCELLED">Cancelled</option>
+                          <option value="pending">Pending</option>
+                          <option value="preparing">Preparing</option>
+                          <option value="ready">Ready</option>
+                          <option value="delivered">Delivered / Completed</option>
+                          <option value="cancelled">Cancelled</option>
                         </select>
                       </div>
                     </td>

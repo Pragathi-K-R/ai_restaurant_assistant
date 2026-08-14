@@ -61,3 +61,22 @@ class WasteService:
         await self.repo.delete(waste_id)
         logger.info(f"Deleted waste record ID: {waste_id}")
         return {"message": "Waste record deleted successfully", "success": True}
+
+    async def update_waste(self, waste_id: int, data: WasteCreate) -> WasteResponse:
+        waste = await self.repo.get_by_id(waste_id)
+        if not waste:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Waste record not found")
+
+        waste.ingredient_name = data.ingredient_name
+        waste.quantity_wasted = data.quantity_wasted
+        waste.unit = data.unit
+        waste.reason = data.reason
+        if hasattr(data, 'cost') and data.cost is not None:
+            waste.cost = data.cost
+
+        if data.waste_date:
+            waste.waste_date = data.waste_date
+
+        await self.db.commit()
+        await self.db.refresh(waste)
+        return self._map_to_response(waste)

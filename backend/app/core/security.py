@@ -93,6 +93,14 @@ def decode_token(token: str) -> Optional[dict]:
     Returns:
         Token payload dict or None if invalid
     """
+    if not token:
+        return None
+    token = token.strip()
+    if token.startswith("Bearer "):
+        token = token[7:].strip()
+    if (token.startswith('"') and token.endswith('"')) or (token.startswith("'") and token.endswith("'")):
+        token = token[1:-1].strip()
+
     try:
         payload = jwt.decode(
             token,
@@ -129,3 +137,4 @@ def verify_refresh_token(token: str) -> Optional[dict]:
     if payload and payload.get("type") == "refresh":
         return payload
     return None
+

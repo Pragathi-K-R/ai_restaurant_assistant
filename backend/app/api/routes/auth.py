@@ -3,7 +3,8 @@ Authentication API routes.
 Handles registration, login, token refresh, and password management.
 """
 
-from fastapi import APIRouter, Depends, status
+from typing import Optional
+from fastapi import APIRouter, Depends, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
@@ -93,15 +94,33 @@ async def login(
     summary="Refresh access token",
 )
 async def refresh_token(
-    token_data: RefreshTokenRequest,
+    request: Request,
+    token_data: Optional[RefreshTokenRequest] = None,
     db: AsyncSession = Depends(get_db),
 ):
     """
     Get a new access token using a valid refresh token.
     Call this when the access token expires.
     """
+    raw_token = None
+    if token_data:
+        raw_token = token_data.refresh_token or token_data.refreshToken or token_data.token
+
+    if not raw_token and request:
+        auth_header = request.headers.get("Authorization")
+        if auth_header:
+            raw_token = auth_header
+
+    if not raw_token:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     service = AuthService(db)
-    return await service.refresh_access_token(token_data.refresh_token)
+    return await service.refresh_access_token(raw_token)
 
 
 @router.get(

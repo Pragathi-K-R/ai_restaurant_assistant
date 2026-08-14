@@ -5,13 +5,13 @@ Leverages scikit-learn, pandas, numpy, and statistical modeling.
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 
-from app.models.all_models import Order, OrderItem, Menu, Customer, FoodWaste
+from app.models.all_models import Order, OrderItem, Menu, Customer, FoodWaste, OrderStatus
 
 
 class MLService:

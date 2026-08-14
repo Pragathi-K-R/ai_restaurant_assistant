@@ -88,6 +88,12 @@ class OrderItem(Base):
     def price_at_time(self) -> float:
         return float(self.unit_price) if self.unit_price is not None else 0.0
 
+    @property
+    def item_name(self) -> str:
+        if self.menu_item:
+            return self.menu_item.name
+        return f"Dish #{self.menu_item_id}"
+
 
 class FoodCategory(str, enum.Enum):
     APPETIZER = "appetizer"

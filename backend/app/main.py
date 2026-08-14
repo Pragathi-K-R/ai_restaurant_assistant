@@ -112,8 +112,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Custom handler for Pydantic validation errors."""
     errors = []
     for error in exc.errors():
-        field = " → ".join(str(loc) for loc in error["loc"] if loc != "body")
-        errors.append({"field": field, "message": error["msg"]})
+        if error.get("type") == "json_invalid":
+            errors.append({
+                "field": "body",
+                "message": "Malformed JSON request body. Please verify that your JSON is syntactically valid (check for missing quotes, commas, or braces)."
+            })
+        else:
+            field = " → ".join(str(loc) for loc in error["loc"] if loc != "body")
+            errors.append({"field": field, "message": error["msg"]})
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={

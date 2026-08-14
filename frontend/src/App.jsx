@@ -18,6 +18,7 @@ import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 
 // Application Pages
+import DashboardSwitch from './pages/DashboardSwitch';
 import Dashboard from './pages/Dashboard';
 import CustomerDashboard from './pages/CustomerDashboard';
 import Menu from './pages/Menu';
@@ -34,6 +35,44 @@ import KnowledgeBase from './pages/KnowledgeBase';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import NotFound from './pages/NotFound';
+
+// Dynamic redirect based on user role
+import { useAuth } from './context/AuthContext';
+
+function RootRedirect() {
+  const { user, isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user?.role === 'customer') {
+    return <Navigate to="/customer/dashboard" replace />;
+  }
+  return <Navigate to="/admin/dashboard" replace />;
+}
+
+function OrdersRedirect() {
+  const { user } = useAuth();
+  if (user?.role === 'customer') {
+    return <Navigate to="/customer/orders" replace />;
+  }
+  return <Navigate to="/admin/orders" replace />;
+}
+
+function MenuRedirect() {
+  const { user } = useAuth();
+  if (user?.role === 'customer') {
+    return <Navigate to="/customer/menu" replace />;
+  }
+  return <Navigate to="/admin/menu" replace />;
+}
+
+function ReviewsRedirect() {
+  const { user } = useAuth();
+  if (user?.role === 'customer') {
+    return <Navigate to="/customer/reviews" replace />;
+  }
+  return <Navigate to="/admin/reviews" replace />;
+}
 
 export default function App() {
   return (
@@ -69,7 +108,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Root redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<RootRedirect />} />
 
           {/* Protected Application Routes — no path on parent so all child paths are absolute */}
           <Route
@@ -79,14 +118,125 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/customer-dashboard" element={<CustomerDashboard />} />
-            <Route path="/customer" element={<CustomerDashboard />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/food-waste" element={<FoodWaste />} />
-            <Route path="/reviews" element={<Reviews />} />
+            {/* Backward compatibility redirects */}
+            <Route path="/dashboard" element={<RootRedirect />} />
+            <Route path="/customer-dashboard" element={<Navigate to="/customer/dashboard" replace />} />
+            <Route path="/customer" element={<Navigate to="/customer/dashboard" replace />} />
+            <Route path="/orders" element={<OrdersRedirect />} />
+            <Route path="/menu" element={<MenuRedirect />} />
+            <Route path="/reviews" element={<ReviewsRedirect />} />
+            <Route path="/food-waste" element={<Navigate to="/admin/food-waste" replace />} />
+            <Route path="/ai-assistant" element={<Navigate to="/admin/ai" replace />} />
+            <Route path="/analytics" element={<Navigate to="/admin/analytics" replace />} />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin/dashboard"
+              element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/orders"
+              element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <Orders />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/menu"
+              element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <Menu />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/reviews"
+              element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <Reviews />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute roles={['admin', 'manager']}>
+                  <Analytics />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/food-waste"
+              element={
+                <ProtectedRoute roles={['admin', 'manager']}>
+                  <FoodWaste />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/ai"
+              element={
+                <ProtectedRoute roles={['admin', 'manager', 'staff']}>
+                  <AIAssistant />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Customer Routes */}
+            <Route
+              path="/customer/dashboard"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="overview" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/menu"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="menu" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/cart"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="cart" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/orders"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="orders" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/reviews"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="reviews" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/customer/profile"
+              element={
+                <ProtectedRoute roles={['customer', 'admin', 'manager', 'staff']}>
+                  <CustomerDashboard activeTab="profile" />
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="/ai-assistant" element={<AIAssistant />} />
             <Route path="/profile" element={<Profile />} />
 
