@@ -40,8 +40,8 @@ export default function Login() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email address is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid email format';
+    if (!formData.email) newErrors.email = 'Employee ID is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Please enter a valid Employee ID';
     if (!formData.password) newErrors.password = 'Password is required';
     return newErrors;
   };
@@ -202,21 +202,21 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} noValidate>
             
-            {/* Email Address Field */}
+            {/* Employee ID Field */}
             <div className="form-group" style={{ marginBottom: '20px' }}>
               <label htmlFor="email" style={{ display: 'block', fontWeight: 600, fontSize: '13px', color: '#cbd5e1', marginBottom: '8px' }}>
-                Email Address
+                Employee ID
               </label>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   name="email"
                   className={errors.email ? 'error' : ''}
-                  placeholder="admin@restaurant.com or cust1@example.com"
+                  placeholder="admin@restaurant.com"
                   value={formData.email}
                   onChange={handleChange}
-                  autoComplete="email"
+                  autoComplete="username"
                   autoFocus
                   style={{
                     width: '100%',
@@ -243,7 +243,7 @@ export default function Login() {
                     }
                   }}
                 />
-                <i className="bi bi-envelope" style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px', pointerEvents: 'none' }}></i>
+                <i className="bi bi-person" style={{ position: 'absolute', left: '16px', color: '#64748b', fontSize: '18px', pointerEvents: 'none' }}></i>
               </div>
               {errors.email && (
                 <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -425,7 +425,7 @@ export default function Login() {
                 <span>🔑</span> Demo Admin Account
               </p>
               <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                admin@restaurant.com / Admin@123
+                ID: admin@restaurant.com / Pass: Admin@123
               </p>
             </div>
             <button

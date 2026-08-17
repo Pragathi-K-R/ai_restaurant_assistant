@@ -1848,7 +1848,7 @@ input, textarea, select {
   flex: 1.15;
   position: relative;
   background: linear-gradient(135deg, rgba(9, 10, 15, 0.88) 0%, rgba(20, 24, 36, 0.82) 100%),
-              url('/images/login_hero.png') center/cover no-repeat;
+              url('/images/login_hero.jpg') center/cover no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
