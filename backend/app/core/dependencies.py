@@ -39,22 +39,27 @@ async def get_current_user(
     token = credentials.credentials if credentials else oauth2_token
 
     if not token:
+        logger.warning("Authentication failed: No Authorization token found in request headers")
         raise credentials_exception
 
     payload = verify_access_token(token)
     if not payload:
+        logger.warning("Authentication failed: Access token verification failed (expired, invalid signature, or wrong type)")
         raise credentials_exception
 
     user_id: str = payload.get("sub")
     if not user_id:
+        logger.warning("Authentication failed: Token payload is missing 'sub' claim")
         raise credentials_exception
 
     repo = UserRepository(db)
     user = await repo.get_by_id(int(user_id))
     if not user:
+        logger.warning(f"Authentication failed: User with ID {user_id} not found in database")
         raise credentials_exception
 
     if not user.is_active:
+        logger.warning(f"Authentication failed: User account for ID {user_id} is deactivated")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"

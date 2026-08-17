@@ -4,16 +4,16 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Wrap httpx methods with default timeout of 30.0s
+# Wrap httpx methods with default timeout of 120.0s
 orig_post = httpx.post
 orig_get = httpx.get
 def post_with_timeout(*args, **kwargs):
     if 'timeout' not in kwargs:
-        kwargs['timeout'] = 30.0
+        kwargs['timeout'] = 120.0
     return orig_post(*args, **kwargs)
 def get_with_timeout(*args, **kwargs):
     if 'timeout' not in kwargs:
-        kwargs['timeout'] = 30.0
+        kwargs['timeout'] = 120.0
     return orig_get(*args, **kwargs)
 httpx.post = post_with_timeout
 httpx.get = get_with_timeout

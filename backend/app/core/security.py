@@ -94,11 +94,17 @@ def decode_token(token: str) -> Optional[dict]:
         Token payload dict or None if invalid
     """
     if not token:
+        logger.debug("JWT decode failed: Token is empty or None")
         return None
+        
     token = token.strip()
-    if token.startswith("Bearer "):
+    
+    # Recursively strip "Bearer " prefix (case-insensitive) in case of double-prefixing in client tools
+    while token.lower().startswith("bearer "):
         token = token[7:].strip()
-    if (token.startswith('"') and token.endswith('"')) or (token.startswith("'") and token.endswith("'")):
+        
+    # Strip quotes if the token was wrapped in quotes
+    while (token.startswith('"') and token.endswith('"')) or (token.startswith("'") and token.endswith("'")):
         token = token[1:-1].strip()
 
     try:
@@ -109,7 +115,7 @@ def decode_token(token: str) -> Optional[dict]:
         )
         return payload
     except JWTError as e:
-        logger.warning(f"JWT decode error: {e}")
+        logger.warning(f"JWT validation failed: {str(e)}")
         return None
 
 

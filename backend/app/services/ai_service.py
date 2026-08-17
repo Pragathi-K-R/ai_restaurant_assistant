@@ -171,7 +171,62 @@ class AIService:
             return "Review data temporarily unavailable."
 
     # ─── Smart Fallback Response Generator ───────────────────────────────────
-    # Removed as per user request to handle Gemini failures properly.
+    def _generate_fallback_analysis(
+        self, question: str, sales_ctx: str, waste_ctx: str, reviews_ctx: str
+    ) -> str:
+        q_lower = question.lower()
+        
+        # Categorize the question based on keywords
+        is_waste = any(w in q_lower for w in ["waste", "spoil", "trash", "throw", "loss", "garbage", "reduce", "wasted"])
+        is_sales = any(w in q_lower for w in ["sales", "revenue", "sell", "best", "popular", "dish", "menu", "order", "money", "income"])
+        is_review = any(w in q_lower for w in ["review", "sentiment", "good", "bad", "like", "customer", "feedback", "rating", "satisfaction", "opinion"])
+
+        if is_waste:
+            insight = f"Analysis of food waste logs for query: '{question}'."
+            reason = "Waste is driven primarily by ingredient shelf-life limitations, preparation oversights, or customer leftovers."
+            evidence = waste_ctx
+            recommendation = (
+                "1. Implement tighter FIFO (First-In, First-Out) inventory management.\n"
+                "2. Conduct portion size audits for high-waste dishes.\n"
+                "3. Adjust raw ingredient purchase orders to match actual weekly menu demand."
+            )
+        elif is_sales:
+            insight = f"Analysis of sales performance and popular menu items for query: '{question}'."
+            reason = "Sales trends indicate peak order volumes for specific high-popularity menu offerings."
+            evidence = sales_ctx
+            recommendation = (
+                "1. Optimize pricing structures for best-selling menu items.\n"
+                "2. Ensure prime inventory availability for high-demand items during peak hours.\n"
+                "3. Launch promotions or bundle offers featuring top-selling products to increase average order values."
+            )
+        elif is_review:
+            insight = f"Analysis of customer sentiment and reviews for query: '{question}'."
+            reason = "Customer satisfaction scores are driven by service speed, food preparation consistency, and dining experience quality."
+            evidence = reviews_ctx
+            recommendation = (
+                "1. Address low-rating reviews promptly and implement customer recovery procedures.\n"
+                "2. Share positive feedback with the kitchen and front-of-house staff to sustain high standards.\n"
+                "3. Provide additional hospitality training focusing on highlighted pain points."
+            )
+        else:
+            # General operational summary
+            insight = f"General operational overview for query: '{question}'."
+            reason = "A holistic assessment of restaurant performance across sales, waste, and review metrics."
+            evidence = f"{sales_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}"
+            recommendation = (
+                "1. Align kitchen preparation volumes with daily sales traffic forecasts.\n"
+                "2. Monitor ingredient utilization rates to minimize kitchen waste.\n"
+                "3. Review weekly customer feedback loops to maintain optimal dining satisfaction."
+            )
+
+        return (
+            f"**Insight:**\n{insight}\n\n"
+            f"**Reason:**\n{reason}\n\n"
+            f"**Evidence:**\n{evidence}\n\n"
+            f"**Recommendation:**\n{recommendation}\n\n"
+            f"*Note: Operating in Offline Analytics mode. To enable dynamic generative AI answers, configure a valid `GOOGLE_API_KEY` in the backend `.env` file.*"
+        )
+
     # ─── Main RAG Answer Method ───────────────────────────────────────────────
 
     async def answer_question(self, user_id: Optional[int], request: ChatRequest) -> ChatResponse:
@@ -203,12 +258,7 @@ class AIService:
         if not api_key or api_key == "your-google-gemini-api-key-here":
             logger.warning("Gemini API key is not configured. Falling back to data analytics engine.")
             model_used = "Data Analytics Engine (Offline Fallback)"
-            answer = (
-                f"**Insight:**\nAnalysis of active operational data for: '{question}'.\n\n"
-                f"**Reason:**\nLive database metrics retrieved from sales, inventory waste logs, and customer reviews.\n\n"
-                f"**Evidence:**\n{sales_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}\n\n"
-                f"**Recommendation:**\nMonitor top-selling dishes and optimize ingredient stock orders based on weekly sales patterns."
-            )
+            answer = self._generate_fallback_analysis(question, sales_ctx, waste_ctx, reviews_ctx)
         else:
             try:
                 from google import genai
@@ -245,12 +295,7 @@ class AIService:
             except Exception as e:
                 logger.warning(f"Gemini API unavailable or rate-limited: {e}. Generating data-grounded fallback analysis.")
                 model_used = "Data Analytics Engine (Offline Fallback)"
-                answer = (
-                    f"**Insight:**\nAnalysis of active operational data for: '{question}'.\n\n"
-                    f"**Reason:**\nLive database metrics retrieved from sales, inventory waste logs, and customer reviews.\n\n"
-                    f"**Evidence:**\n{sales_ctx}\n\n{waste_ctx}\n\n{reviews_ctx}\n\n"
-                    f"**Recommendation:**\nMonitor top-selling dishes and optimize ingredient stock orders based on weekly sales patterns."
-                )
+                answer = self._generate_fallback_analysis(question, sales_ctx, waste_ctx, reviews_ctx)
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 

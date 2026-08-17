@@ -16,6 +16,7 @@ from slowapi.errors import RateLimitExceeded
 from app.core.config import settings
 from app.core.database import create_tables
 from app.api import api_router
+from app.core.vector_db import vector_db
 
 # Configure logging
 logging.basicConfig(
@@ -41,6 +42,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {e}")
         raise
+
+    try:
+        logger.info("📦 Pre-initializing ChromaDB vector database...")
+        vector_db.initialize()
+        logger.info("✅ ChromaDB vector database initialized successfully")
+    except Exception as e:
+        logger.warning(f"⚠️ ChromaDB vector database pre-initialization failed: {e}")
 
     yield
 
