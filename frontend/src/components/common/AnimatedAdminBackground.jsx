@@ -1,28 +1,22 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
- * AnimatedAdminBackground — Funny, energetic "Business Boom" animated background for Admin View.
- * 
- * Concept: "Business Boom" & "Boss Dance"
- * Storyline Loop:
- * 1. Calm start -> Admin checks laptop dashboard 💻
- * 2. Sales graph rises sharply 📈
- * 3. Revenue numbers pop up rapidly 💰
- * 4. New customer order alerts ring 🔔
- * 5. Restaurant gets super busy & customers eat dosa/biryani/coffee 🍛
- * 6. Chef tosses dosas with flames and steam in the kitchen 🔥
- * 7. 5-Star reviews flood in ⭐⭐⭐⭐⭐
- * 8. Admin gets ecstatic & does a funny celebration boss dance 😂🕺
- * 9. Confident thumbs-up & meme glasses 😎
- * 10. Grand Ending Banner: "Business Full Joragide… Boss Dance Start! 😎📈💃"
+ * AnimatedAdminBackground — High-visibility "Business Boom" animated background for Admin View.
+ * Features:
+ * - Crystal clear visibility with vibrant Mysuru-Bengaluru Darshini restaurant scene
+ * - Real-time canvas continuous steam simulation for kitchen tawa, oven, and food tables
+ * - 10-step looping "Business Boom" sequence ending in the Boss Dance & Thumbs Up!
+ * - Floating order notification pills & flying rupee/coin celebration particles
+ * - Translucent frosted-glass readability layer (customizable with dimmer slider)
+ * - Floating glass HUD controls (Play/Pause, Instant Boss Dance, Ka-Ching sound, Dimmer)
  */
 export default function AnimatedAdminBackground({
-  overlayOpacity = 0.70,
+  overlayOpacity = 0.32,
   children,
   showControls = true,
 }) {
   const canvasRef = useRef(null);
-  const [stage, setStage] = useState('calm'); // 'calm' | 'sales_rise' | 'orders_ringing' | 'chef_fire' | 'boss_dance' | 'ending_banner'
+  const [stage, setStage] = useState('calm'); // 'calm' | 'sales_rise' | 'orders_ringing' | 'chef_fire' | 'boss_dance'
   const [bgDim, setBgDim] = useState(overlayOpacity);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -31,7 +25,7 @@ export default function AnimatedAdminBackground({
   const [showEndingBanner, setShowEndingBanner] = useState(false);
   const audioCtxRef = useRef(null);
 
-  // Synthesize fun Ka-Ching & celebratory fanfare via Web Audio API (zero external assets)
+  // Synthesize fun Ka-Ching & celebratory fanfare via Web Audio API
   const playKaChingSound = useCallback(() => {
     if (!soundEnabled) return;
     try {
@@ -41,7 +35,6 @@ export default function AnimatedAdminBackground({
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume();
 
-      // Metallic high register ka-ching chime
       const freqs = [1567.98, 2093.00, 2637.02, 3135.96];
       freqs.forEach((f, i) => {
         const osc = ctx.createOscillator();
@@ -57,7 +50,7 @@ export default function AnimatedAdminBackground({
         osc.stop(ctx.currentTime + i * 0.04 + 0.4);
       });
     } catch (e) {
-      console.warn('Audio not supported or blocked:', e);
+      console.warn('Audio error:', e);
     }
   }, [soundEnabled]);
 
@@ -70,7 +63,6 @@ export default function AnimatedAdminBackground({
       const ctx = audioCtxRef.current;
       if (ctx.state === 'suspended') ctx.resume();
 
-      // Energetic rising celebratory trumpet chime: C4 -> E4 -> G4 -> C5 -> G5 -> C6
       const chord = [261.63, 329.63, 392.0, 523.25, 783.99, 1046.5];
       chord.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
@@ -93,12 +85,11 @@ export default function AnimatedAdminBackground({
     }
   }, [soundEnabled]);
 
-  // Trigger full "Business Boom" Boss Celebration Sequence
+  // Trigger full "Business Boom" sequence
   const triggerBusinessBoom = useCallback(() => {
     setStage('sales_rise');
     playKaChingSound();
 
-    // Spawn revenue and order notifications
     const simulatedOrders = [
       { id: 1, text: '🔔 Order #104: Masala Dosa x 3', amount: '+₹360', delay: 200 },
       { id: 2, text: '🚀 Order #105: Dum Biryani Handi x 2', amount: '+₹720', delay: 700 },
@@ -112,18 +103,16 @@ export default function AnimatedAdminBackground({
       }, item.delay);
     });
 
-    // Step 2: Transition to Boss Dance
     setTimeout(() => {
       setStage('boss_dance');
       setShowEndingBanner(true);
       playBossDanceFanfare();
 
-      // Spawn currency and celebration sparkles
       const boomIcons = ['📈', '💰', '₹', '🔥', '⭐', '🕺', '💃', '💯', '✨', '🎉'];
       const newBursts = Array.from({ length: 18 }).map((_, i) => ({
         id: Math.random() + i,
         icon: boomIcons[Math.floor(Math.random() * boomIcons.length)],
-        x: 18 + (Math.random() * 22 - 11), // near admin counter
+        x: 18 + (Math.random() * 22 - 11),
         y: 40 + (Math.random() * 20 - 10),
         vx: (Math.random() - 0.5) * 110,
         vy: -60 - Math.random() * 90,
@@ -132,7 +121,6 @@ export default function AnimatedAdminBackground({
       setBurstItems(newBursts);
     }, 2200);
 
-    // Step 3: Hold ending banner & settle back to steady busy state
     setTimeout(() => {
       setBurstItems([]);
     }, 5500);
@@ -144,7 +132,7 @@ export default function AnimatedAdminBackground({
     }, 8500);
   }, [playKaChingSound, playBossDanceFanfare]);
 
-  // Automated seamless loop: triggers Business Boom every 14 seconds
+  // Automated loop: triggers Business Boom every 14 seconds
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -152,7 +140,6 @@ export default function AnimatedAdminBackground({
       triggerBusinessBoom();
     }, 15000);
 
-    // Initial trigger after 2 seconds
     const initialTimer = setTimeout(() => {
       triggerBusinessBoom();
     }, 2000);
@@ -163,7 +150,7 @@ export default function AnimatedAdminBackground({
     };
   }, [isPlaying, triggerBusinessBoom]);
 
-  // Canvas Steam, Heat shimmer & Rising Chart Graph Animation
+  // Canvas Steam & Heat Shimmer Simulation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -179,7 +166,6 @@ export default function AnimatedAdminBackground({
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Steam emitters mapped to kitchen flame tawa, chef area, and restaurant diner plates
     const emitters = [
       { name: 'chef_tawa_flame', xRel: 0.31, yRel: 0.38, count: 24, color: 'rgba(255, 235, 200, ', baseRad: 16, driftX: -0.3, vy: -1.8 },
       { name: 'kitchen_oven', xRel: 0.44, yRel: 0.39, count: 16, color: 'rgba(255, 240, 210, ', baseRad: 12, driftX: 0.2, vy: -1.4 },
@@ -204,13 +190,12 @@ export default function AnimatedAdminBackground({
       }
     });
 
-    // Floating golden rupee coins & sparkle particles
     const floaters = Array.from({ length: 20 }).map(() => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       radius: 2 + Math.random() * 3,
       vy: -0.3 - Math.random() * 0.4,
-      alpha: 0.2 + Math.random() * 0.6,
+      alpha: 0.3 + Math.random() * 0.6,
       alphaSpeed: 0.02 + Math.random() * 0.02,
     }));
 
@@ -220,7 +205,7 @@ export default function AnimatedAdminBackground({
       time += 0.035;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Draw Golden Sparkles & Floating Particles
+      // 1. Golden Sparkles
       floaters.forEach((f) => {
         f.y += f.vy;
         if (f.y < -10) {
@@ -228,18 +213,18 @@ export default function AnimatedAdminBackground({
           f.x = Math.random() * canvas.width;
         }
         f.alpha += Math.sin(time + f.x) * f.alphaSpeed;
-        const boundedAlpha = Math.max(0.05, Math.min(0.7, f.alpha));
+        const boundedAlpha = Math.max(0.1, Math.min(0.8, f.alpha));
 
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(245, 158, 11, ${boundedAlpha * 0.5})`;
+        ctx.fillStyle = `rgba(245, 158, 11, ${boundedAlpha * 0.6})`;
         ctx.shadowColor = '#f59e0b';
         ctx.shadowBlur = 8;
         ctx.fill();
       });
       ctx.shadowBlur = 0;
 
-      // 2. Draw Realistic Rising Food & Kitchen Steam
+      // 2. Rising Steam
       particles.forEach((p) => {
         const em = p.emitter;
         p.life += p.speed;
@@ -258,14 +243,14 @@ export default function AnimatedAdminBackground({
 
         let alpha = 0;
         if (p.life < 0.25) {
-          alpha = (p.life / 0.25) * 0.35;
+          alpha = (p.life / 0.25) * 0.45;
         } else {
-          alpha = (1 - (p.life - 0.25) / 0.75) * 0.35;
+          alpha = (1 - (p.life - 0.25) / 0.75) * 0.45;
         }
 
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
         grad.addColorStop(0, `${em.color}${alpha})`);
-        grad.addColorStop(0.6, `${em.color}${alpha * 0.45})`);
+        grad.addColorStop(0.6, `${em.color}${alpha * 0.5})`);
         grad.addColorStop(1, `${em.color}0)`);
 
         ctx.beginPath();
@@ -274,30 +259,30 @@ export default function AnimatedAdminBackground({
         ctx.fill();
       });
 
-      // 3. Kitchen Tawa Flame Glow & Heat Flicker
+      // 3. Kitchen Tawa Flame Glow
       const flameX = 0.31 * canvas.width;
       const flameY = 0.38 * canvas.height;
-      const flamePulse = 0.18 + Math.sin(time * 9) * 0.07 + Math.cos(time * 16) * 0.05;
-      const flameGrad = ctx.createRadialGradient(flameX, flameY, 8, flameX, flameY, 140);
+      const flamePulse = 0.22 + Math.sin(time * 9) * 0.08 + Math.cos(time * 16) * 0.05;
+      const flameGrad = ctx.createRadialGradient(flameX, flameY, 8, flameX, flameY, 150);
       flameGrad.addColorStop(0, `rgba(249, 115, 22, ${flamePulse})`);
-      flameGrad.addColorStop(0.4, `rgba(234, 88, 12, ${flamePulse * 0.5})`);
+      flameGrad.addColorStop(0.4, `rgba(234, 88, 12, ${flamePulse * 0.6})`);
       flameGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
 
       ctx.beginPath();
-      ctx.arc(flameX, flameY, 140, 0, Math.PI * 2);
+      ctx.arc(flameX, flameY, 150, 0, Math.PI * 2);
       ctx.fillStyle = flameGrad;
       ctx.fill();
 
-      // 4. Laptop Screen "Sales Boom" Green Trendline Pulser
+      // 4. Laptop Screen Green Trendline Pulser
       const lapX = 0.40 * canvas.width;
       const lapY = 0.60 * canvas.height;
-      const chartGlow = 0.15 + Math.sin(time * 4) * 0.08;
-      const lapGrad = ctx.createRadialGradient(lapX, lapY, 2, lapX, lapY, 60);
+      const chartGlow = 0.2 + Math.sin(time * 4) * 0.1;
+      const lapGrad = ctx.createRadialGradient(lapX, lapY, 2, lapX, lapY, 70);
       lapGrad.addColorStop(0, `rgba(16, 185, 129, ${chartGlow})`);
       lapGrad.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
       ctx.beginPath();
-      ctx.arc(lapX, lapY, 60, 0, Math.PI * 2);
+      ctx.arc(lapX, lapY, 70, 0, Math.PI * 2);
       ctx.fillStyle = lapGrad;
       ctx.fill();
 
@@ -318,10 +303,10 @@ export default function AnimatedAdminBackground({
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: '100vh',
+        minHeight: '100%',
       }}
     >
-      {/* ─── 1. FIXED BACKGROUND SCENE LAYER ──────────────────────────────── */}
+      {/* ─── 1. FIXED FULL-SCREEN BACKGROUND SCENE ────────────────────────── */}
       <div
         className="admin-scene-wrapper"
         style={{
@@ -335,7 +320,7 @@ export default function AnimatedAdminBackground({
           overflow: 'hidden',
         }}
       >
-        {/* Base Cinematic Image with subtle breathing & zoom animation */}
+        {/* Base Scene Image — fully visible, bright, warm */}
         <div
           className={`admin-image-layer ${stage === 'boss_dance' ? 'boss-dancing' : ''}`}
           style={{
@@ -343,14 +328,14 @@ export default function AnimatedAdminBackground({
             inset: 0,
             backgroundImage: "url('/images/admin_bg.jpg')",
             backgroundSize: 'cover',
-            backgroundPosition: 'center left',
+            backgroundPosition: 'center 40%',
             transformOrigin: '25% 60%',
             transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            filter: stage === 'boss_dance' ? 'saturate(1.15) contrast(1.08)' : 'saturate(1)',
+            filter: stage === 'boss_dance' ? 'saturate(1.2) contrast(1.1) brightness(1.05)' : 'saturate(1.05) brightness(1.0)',
           }}
         />
 
-        {/* Dynamic Canvas Layer for Steam, Kitchen Flames & Rising Charts */}
+        {/* Dynamic Canvas Layer for Steam, Kitchen Flames & Sparkles */}
         <canvas
           ref={canvasRef}
           style={{
@@ -367,7 +352,7 @@ export default function AnimatedAdminBackground({
           style={{
             position: 'absolute',
             left: '26%',
-            top: '22%',
+            top: '18%',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
@@ -380,18 +365,18 @@ export default function AnimatedAdminBackground({
               key={pill.id}
               className="order-notification-pill slide-in-left"
               style={{
-                background: 'rgba(17, 17, 24, 0.92)',
-                border: '1px solid rgba(16, 185, 129, 0.5)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(16, 185, 129, 0.3)',
-                padding: '6px 14px',
+                background: 'rgba(15, 23, 42, 0.94)',
+                border: '1px solid rgba(16, 185, 129, 0.6)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.6), 0 0 16px rgba(16, 185, 129, 0.4)',
+                padding: '8px 16px',
                 borderRadius: '30px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                color: '#fff',
-                fontSize: '12px',
-                fontWeight: 700,
-                backdropFilter: 'blur(10px)',
+                color: '#ffffff',
+                fontSize: '13px',
+                fontWeight: 800,
+                backdropFilter: 'blur(12px)',
                 animation: 'slideInFade 0.4s ease-out forwards',
               }}
             >
@@ -400,10 +385,11 @@ export default function AnimatedAdminBackground({
                 style={{
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: '#fff',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  fontWeight: 800,
+                  padding: '3px 10px',
+                  borderRadius: '14px',
+                  fontSize: '12px',
+                  fontWeight: 900,
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
                 }}
               >
                 {pill.amount}
@@ -420,7 +406,7 @@ export default function AnimatedAdminBackground({
               position: 'absolute',
               left: `${item.x}%`,
               top: `${item.y}%`,
-              fontSize: '30px',
+              fontSize: '32px',
               pointerEvents: 'none',
               transform: `translate(${item.vx}px, ${item.vy}px) rotate(${item.rot}deg)`,
               opacity: 1,
@@ -438,27 +424,28 @@ export default function AnimatedAdminBackground({
             className="boss-dance-banner bounce-in"
             style={{
               position: 'absolute',
-              left: '12%',
-              top: '12%',
+              left: '14%',
+              top: '10%',
               zIndex: 5,
-              background: 'linear-gradient(135deg, #0f172a 0%, #1e1e2f 100%)',
-              border: '2px solid #f59e0b',
-              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.7), 0 0 28px rgba(245, 158, 11, 0.6)',
+              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.95) 100%)',
+              border: '3px solid #f59e0b',
+              boxShadow: '0 16px 48px rgba(0, 0, 0, 0.8), 0 0 32px rgba(245, 158, 11, 0.7)',
               borderRadius: '24px',
-              padding: '16px 24px',
+              padding: '16px 28px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               pointerEvents: 'none',
               animation: 'bossBannerPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              backdropFilter: 'blur(16px)',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '26px', animation: 'wiggle 0.5s infinite' }}>📈</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '28px', animation: 'wiggle 0.5s infinite' }}>📈</span>
               <span
                 style={{
                   fontFamily: "'Outfit', 'Impact', sans-serif",
-                  fontSize: '22px',
+                  fontSize: '24px',
                   fontWeight: 900,
                   letterSpacing: '0.8px',
                   background: 'linear-gradient(135deg, #fbbf24 0%, #f97316 50%, #10b981 100%)',
@@ -466,19 +453,21 @@ export default function AnimatedAdminBackground({
                   WebkitTextFillColor: 'transparent',
                   lineHeight: 1.2,
                   textAlign: 'center',
+                  textShadow: '0 2px 10px rgba(0,0,0,0.5)',
                 }}
               >
                 Business Full Joragide… Boss Dance Start! 😎📈💃
               </span>
-              <span style={{ fontSize: '26px', animation: 'wiggle 0.5s infinite 0.2s' }}>💃</span>
+              <span style={{ fontSize: '28px', animation: 'wiggle 0.5s infinite 0.2s' }}>💃</span>
             </div>
             <div
               style={{
-                fontSize: '12px',
-                fontWeight: 700,
+                fontSize: '13px',
+                fontWeight: 800,
                 color: '#34d399',
                 marginTop: '4px',
                 letterSpacing: '0.5px',
+                textShadow: '0 1px 4px rgba(0,0,0,0.8)',
               }}
             >
               ಬ್ಯುಸಿನೆಸ್ ಫುಲ್ ಜೋರಾಗಿದೆ! • Peak Sales Day 🔥
@@ -486,35 +475,17 @@ export default function AnimatedAdminBackground({
           </div>
         )}
 
-        {/* ─── 4. MODERN WEB APP OVERLAY (CLEAN CENTER & RIGHT FOR CARDS) ── */}
+        {/* ─── 4. TRANSLUCENT CINEMATIC VIGNETTE (VIBRANT & VISIBLE) ──────── */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: `
-              linear-gradient(90deg, 
-                rgba(10, 10, 15, ${bgDim * 0.45}) 0%, 
-                rgba(10, 10, 15, ${bgDim * 0.75}) 30%, 
-                rgba(10, 10, 15, ${Math.min(0.96, bgDim + 0.15)}) 60%, 
-                rgba(10, 10, 15, ${Math.min(0.98, bgDim + 0.25)}) 100%
-              ),
-              radial-gradient(ellipse at 25% 60%, transparent 20%, rgba(10, 10, 15, 0.5) 100%)
+              radial-gradient(ellipse at center, rgba(10, 10, 18, ${bgDim * 0.3}) 0%, rgba(10, 10, 18, ${bgDim}) 100%),
+              linear-gradient(180deg, rgba(10, 10, 18, ${bgDim * 0.5}) 0%, transparent 40%, rgba(10, 10, 18, ${bgDim * 0.7}) 100%)
             `,
             pointerEvents: 'none',
             transition: 'background 0.3s ease',
-          }}
-        />
-
-        {/* Top & Bottom Ambient Glow Line */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.4), rgba(245, 158, 11, 0.4), transparent)',
-            pointerEvents: 'none',
           }}
         />
       </div>
@@ -527,21 +498,20 @@ export default function AnimatedAdminBackground({
             position: 'fixed',
             bottom: '24px',
             right: '24px',
-            zIndex: 90,
-            background: 'rgba(20, 20, 28, 0.90)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(16, 185, 129, 0.35)',
+            zIndex: 99,
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
             borderRadius: '40px',
             padding: '8px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(16, 185, 129, 0.2)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(16, 185, 129, 0.25)',
             fontSize: '12px',
-            color: 'var(--text-secondary)',
+            color: '#cbd5e1',
           }}
         >
-          {/* Status Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
@@ -554,12 +524,12 @@ export default function AnimatedAdminBackground({
                 animation: isPlaying ? 'pulse 2s infinite' : 'none',
               }}
             />
-            <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '11px' }}>
+            <span style={{ fontWeight: 800, color: '#ffffff', fontSize: '11px' }}>
               Business Boom Live
             </span>
           </div>
 
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)' }} />
 
           {/* Trigger "Boss Dance" Button */}
           <button
@@ -571,17 +541,17 @@ export default function AnimatedAdminBackground({
               color: '#0f172a',
               border: 'none',
               borderRadius: '20px',
-              padding: '4px 12px',
-              fontSize: '11px',
-              fontWeight: 800,
+              padding: '5px 14px',
+              fontSize: '12px',
+              fontWeight: 900,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              boxShadow: '0 2px 10px rgba(16, 185, 129, 0.4)',
+              gap: '5px',
+              boxShadow: '0 3px 12px rgba(16, 185, 129, 0.4)',
               transition: 'transform 0.15s ease',
             }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.94)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             <span>🕺</span>
@@ -593,17 +563,17 @@ export default function AnimatedAdminBackground({
             onClick={() => setSoundEnabled((prev) => !prev)}
             title={soundEnabled ? 'Mute Ka-Ching sound' : 'Enable Ka-Ching sound'}
             style={{
-              background: soundEnabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: soundEnabled ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '50%',
-              width: '28px',
-              height: '28px',
+              width: '30px',
+              height: '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '12px',
-              color: soundEnabled ? '#34d399' : 'var(--text-secondary)',
+              fontSize: '13px',
+              color: soundEnabled ? '#34d399' : '#94a3b8',
             }}
           >
             {soundEnabled ? '🔊' : '🔇'}
@@ -614,29 +584,29 @@ export default function AnimatedAdminBackground({
             onClick={() => setIsPlaying((p) => !p)}
             title={isPlaying ? 'Pause animations' : 'Resume animations'}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '50%',
-              width: '28px',
-              height: '28px',
+              width: '30px',
+              height: '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '11px',
-              color: 'var(--text-secondary)',
+              fontSize: '12px',
+              color: '#e2e8f0',
             }}
           >
             {isPlaying ? '⏸' : '▶'}
           </button>
 
           {/* Dimmer Slider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Adjust background dimness for chart readability">
-            <span style={{ fontSize: '11px' }}>👁️</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Adjust background visibility / dimness">
+            <span style={{ fontSize: '12px' }}>👁️</span>
             <input
               type="range"
-              min="0.40"
-              max="0.90"
+              min="0.0"
+              max="0.80"
               step="0.05"
               value={bgDim}
               onChange={(e) => setBgDim(parseFloat(e.target.value))}
@@ -651,7 +621,7 @@ export default function AnimatedAdminBackground({
         </div>
       )}
 
-      {/* ─── 6. FOREGROUND CONTENT (ADMIN DASHBOARD METRICS, CHARTS, TABLES) ─ */}
+      {/* ─── 6. FOREGROUND CONTENT (CHARTS, CARDS, TABLES) ────────────────── */}
       <div
         className="foreground-admin-wrapper"
         style={{

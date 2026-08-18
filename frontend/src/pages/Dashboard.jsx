@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 import { dashboardAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import AnimatedAdminBackground from '../components/common/AnimatedAdminBackground';
 
 // Chart.js imports
 import {
@@ -142,8 +141,7 @@ export default function Dashboard() {
   };
 
   return (
-    <AnimatedAdminBackground>
-      <div className="fade-in">
+    <div className="fade-in">
       {/* Page Header */}
       <div className="page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -284,8 +282,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      </div>
-    </AnimatedAdminBackground>
+    </div>
   );
 }
 

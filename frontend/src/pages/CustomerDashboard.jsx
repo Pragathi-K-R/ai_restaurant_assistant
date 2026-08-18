@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 import { customersAPI, menuAPI, ordersAPI, reviewsAPI, aiAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import AnimatedCustomerBackground from '../components/common/AnimatedCustomerBackground';
 
 export default function CustomerDashboard({ activeTab: propActiveTab }) {
   const { user } = useAuth();
@@ -311,8 +310,7 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
   });
 
   return (
-    <AnimatedCustomerBackground>
-      <div className="fade-in" style={{ paddingBottom: '40px' }}>
+    <div className="fade-in" style={{ paddingBottom: '40px' }}>
       
       {/* ─── 1. CUSTOMER PROFILE & HERO HEADER ──────────────────────────── */}
       <div
@@ -1146,8 +1144,7 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
 
       {/* Table Reservation Modal removed completely */}
 
-      </div>
-    </AnimatedCustomerBackground>
+    </div>
   );
 }
 

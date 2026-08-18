@@ -2068,29 +2068,94 @@ input, textarea, select {
   }
 }
 
-/* ─── Animated South Indian Restaurant Background Styles ─── */
-.animated-restaurant-bg-container {
+/* ─── Animated Backgrounds Global Design System (High Visibility & Frosted Glass) ─── */
+.animated-restaurant-bg-container,
+.animated-admin-bg-container {
   position: relative;
   min-height: 100%;
 }
 
-.animated-restaurant-bg-container .card {
-  background: rgba(24, 24, 34, 0.85);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+/* Ensure bright, ultra-crisp typography across all views */
+.animated-restaurant-bg-container .page-title,
+.animated-admin-bg-container .page-title {
+  color: #ffffff !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+  font-weight: 800;
 }
 
-.animated-restaurant-bg-container .card:hover {
-  background: rgba(30, 30, 44, 0.92);
-  border-color: rgba(249, 115, 22, 0.35);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55), 0 0 15px rgba(249, 115, 22, 0.15);
+.animated-restaurant-bg-container .page-subtitle,
+.animated-admin-bg-container .page-subtitle {
+  color: #e2e8f0 !important;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85);
 }
 
-.animated-restaurant-bg-container .bg-hud-controls {
+/* Modern Frosted Glass Cards with High Background Visibility */
+.animated-restaurant-bg-container .card,
+.animated-restaurant-bg-container .stat-card,
+.animated-admin-bg-container .card,
+.animated-admin-bg-container .stat-card,
+.animated-admin-bg-container .table-container,
+.animated-restaurant-bg-container .table-container {
+  background: rgba(15, 23, 42, 0.62) !important;
+  backdrop-filter: blur(16px) saturate(130%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.5) !important;
+}
+
+.animated-restaurant-bg-container .card:hover,
+.animated-restaurant-bg-container .stat-card:hover,
+.animated-admin-bg-container .card:hover,
+.animated-admin-bg-container .stat-card:hover {
+  background: rgba(20, 30, 55, 0.76) !important;
+  border-color: rgba(249, 115, 22, 0.45) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.6), 0 0 20px rgba(249, 115, 22, 0.2) !important;
+}
+
+.animated-admin-bg-container .card:hover,
+.animated-admin-bg-container .stat-card:hover {
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.6), 0 0 20px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Bright text inside frosted cards */
+.animated-restaurant-bg-container .card-title,
+.animated-admin-bg-container .card-title,
+.animated-admin-bg-container .stat-value,
+.animated-restaurant-bg-container .stat-value {
+  color: #ffffff !important;
+}
+
+.animated-restaurant-bg-container .card-subtitle,
+.animated-admin-bg-container .card-subtitle,
+.animated-admin-bg-container .stat-label,
+.animated-restaurant-bg-container .stat-label {
+  color: #94a3b8 !important;
+}
+
+.animated-restaurant-bg-container .bg-hud-controls,
+.animated-admin-bg-container .admin-hud-controls {
   user-select: none;
   animation: fadeInBottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Make layout navbar & sidebar harmonize with full-screen background */
+.app-layout {
+  background: transparent !important;
+}
+
+.sidebar {
+  background: rgba(13, 13, 22, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.navbar {
+  background: rgba(13, 13, 22, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 @keyframes fadeInBottom {
@@ -2104,31 +2169,5 @@ input, textarea, select {
   }
 }
 
-/* ─── Animated Admin Business Boom Background Styles ─── */
-.animated-admin-bg-container {
-  position: relative;
-  min-height: 100%;
-}
-
-.animated-admin-bg-container .card,
-.animated-admin-bg-container .stat-card {
-  background: rgba(22, 22, 32, 0.86);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-}
-
-.animated-admin-bg-container .card:hover,
-.animated-admin-bg-container .stat-card:hover {
-  background: rgba(28, 28, 42, 0.92);
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55), 0 0 16px rgba(16, 185, 129, 0.15);
-}
-
-.animated-admin-bg-container .admin-hud-controls {
-  user-select: none;
-  animation: fadeInBottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
 
 

@@ -1,18 +1,17 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 /**
- * AnimatedCustomerBackground — Lively, funny animated background for the Customer View.
+ * AnimatedCustomerBackground — High-visibility animated background for Customer View.
  * Features:
- * - High-res Mysore/Bengaluru Darshini restaurant scene with happy Indian customer
+ * - Crystal clear visibility of Mysore/Bengaluru Darshini restaurant scene & customer
  * - Real-time continuous canvas steam physics for Masala Dosa, Filter Coffee, Biryani, Sambar & Chef Tawa
  * - Looping dramatic tasting cycle: Munching -> Suspenseful Pause -> Huge "SUPER! 😋🔥" Thumbs-Up reaction
  * - Floating spice/flame reaction particles and animated Kannada & English comic speech bubble
- * - Chef cooking flame flicker & meter-coffee stream dynamic effects
- * - Dark gradient overlay for pristine dashboard readability
- * - Floating glass HUD control widget (Dimness, Sounds, Instant "SUPER!" trigger)
+ * - Translucent frosted-glass readability layer (customizable with dimmer slider)
+ * - Floating glass HUD controls (Play/Pause, Instant SUPER! button, Audio chime, Dimmer)
  */
 export default function AnimatedCustomerBackground({ 
-  overlayOpacity = 0.65, 
+  overlayOpacity = 0.32, 
   children,
   showControls = true 
 }) {
@@ -26,7 +25,7 @@ export default function AnimatedCustomerBackground({
   const [emojiBurst, setEmojiBurst] = useState([]);
   const audioCtxRef = useRef(null);
 
-  // Synthesize pleasant ambient chime using Web Audio API (zero external asset dependencies)
+  // Synthesize pleasant ambient chime using Web Audio API
   const playSuperSound = useCallback(() => {
     if (!soundEnabled) return;
     try {
@@ -38,7 +37,6 @@ export default function AnimatedCustomerBackground({
         ctx.resume();
       }
 
-      // Fun triumphant rising major chord (C5 -> E5 -> G5 -> C6)
       const notes = [523.25, 659.25, 783.99, 1046.5];
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
@@ -57,7 +55,7 @@ export default function AnimatedCustomerBackground({
         osc.stop(ctx.currentTime + idx * 0.08 + 0.5);
       });
     } catch (e) {
-      console.warn('Audio playback not allowed or not supported:', e);
+      console.warn('Audio playback error:', e);
     }
   }, [soundEnabled]);
 
@@ -68,12 +66,11 @@ export default function AnimatedCustomerBackground({
     setSuperCount((c) => c + 1);
     playSuperSound();
 
-    // Spawn emoji burst
     const emojis = ['🔥', '😋', '👌', '⭐', '☕', '💯', '✨', '❤️'];
-    const newBurst = Array.from({ length: 12 }).map((_, i) => ({
+    const newBurst = Array.from({ length: 14 }).map((_, i) => ({
       id: Math.random() + i,
       emoji: emojis[Math.floor(Math.random() * emojis.length)],
-      x: 65 + (Math.random() * 26 - 13), // near customer face (percentage)
+      x: 65 + (Math.random() * 26 - 13),
       y: 35 + (Math.random() * 20 - 10),
       vx: (Math.random() - 0.5) * 80,
       vy: -50 - Math.random() * 70,
@@ -91,21 +88,18 @@ export default function AnimatedCustomerBackground({
     }, 4200);
   }, [playSuperSound]);
 
-  // Automated seamless loop cycle: Eating (4s) -> Tasting Pause (1.5s) -> SUPER! (4s)
+  // Automated seamless loop cycle
   useEffect(() => {
     if (!isPlaying) return;
 
     const loop = setInterval(() => {
-      // Step 1: Pausing / Savouring with wide eyes
       setReactionStage('pausing');
 
       setTimeout(() => {
-        // Step 2: "SUPER!" Thumbs-Up blast!
         triggerSuperReaction();
       }, 1600);
     }, 11000);
 
-    // Initial trigger after 2 seconds
     const initTimer = setTimeout(() => {
       triggerSuperReaction();
     }, 2000);
@@ -116,7 +110,7 @@ export default function AnimatedCustomerBackground({
     };
   }, [isPlaying, triggerSuperReaction]);
 
-  // Canvas Steam & Ambient Particle Simulation
+  // Canvas Steam Simulation
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -132,7 +126,6 @@ export default function AnimatedCustomerBackground({
     handleResize();
     window.addEventListener('resize', handleResize);
 
-    // Steam emitters mapped to the South Indian food items & kitchen in the 16:9 scene
     const emitters = [
       { name: 'dosa', xRel: 0.47, yRel: 0.81, count: 18, color: 'rgba(255, 245, 230, ', baseRad: 12, driftX: -0.4, vy: -1.2 },
       { name: 'sambar', xRel: 0.58, yRel: 0.82, count: 14, color: 'rgba(255, 235, 210, ', baseRad: 10, driftX: 0.1, vy: -1.4 },
@@ -141,7 +134,6 @@ export default function AnimatedCustomerBackground({
       { name: 'kitchen_tawa', xRel: 0.36, yRel: 0.64, count: 22, color: 'rgba(255, 240, 200, ', baseRad: 18, driftX: -0.2, vy: -1.6 },
     ];
 
-    // Initialize particles
     const particles = [];
     emitters.forEach((em) => {
       for (let i = 0; i < em.count; i++) {
@@ -159,13 +151,12 @@ export default function AnimatedCustomerBackground({
       }
     });
 
-    // Golden cafe bokeh particles
     const bokeh = Array.from({ length: 24 }).map(() => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       radius: 2 + Math.random() * 4,
       vy: -0.2 - Math.random() * 0.4,
-      alpha: 0.2 + Math.random() * 0.5,
+      alpha: 0.3 + Math.random() * 0.5,
       alphaSpeed: 0.01 + Math.random() * 0.02,
     }));
 
@@ -175,7 +166,7 @@ export default function AnimatedCustomerBackground({
       time += 0.03;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Draw Golden Cafe Bokeh & Spice Sparkles
+      // 1. Sparkles
       bokeh.forEach((b) => {
         b.y += b.vy;
         if (b.y < -10) {
@@ -183,41 +174,39 @@ export default function AnimatedCustomerBackground({
           b.x = Math.random() * canvas.width;
         }
         b.alpha += Math.sin(time + b.x) * b.alphaSpeed;
-        const boundedAlpha = Math.max(0.05, Math.min(0.65, b.alpha));
+        const boundedAlpha = Math.max(0.1, Math.min(0.75, b.alpha));
 
         ctx.beginPath();
         ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(251, 191, 36, ${boundedAlpha * 0.4})`;
+        ctx.fillStyle = `rgba(251, 191, 36, ${boundedAlpha * 0.5})`;
         ctx.shadowColor = '#f59e0b';
         ctx.shadowBlur = 10;
         ctx.fill();
       });
       ctx.shadowBlur = 0;
 
-      // 2. Draw Realistic Rising Steam
+      // 2. Rising Steam
       particles.forEach((p) => {
         const em = p.emitter;
         p.life += p.speed;
 
         if (p.life >= p.maxLife) {
           p.life = 0;
-          p.x = em.xRel * canvas.width + (Math.random() - 0.5) * 35,
+          p.x = em.xRel * canvas.width + (Math.random() - 0.5) * 35;
           p.y = em.yRel * canvas.height + (Math.random() - 0.5) * 15;
           p.radius = em.baseRad + Math.random() * 6;
         }
 
-        // Particle Physics
         const sway = Math.sin(time * p.swaySpeed + p.swayOffset) * 1.8;
         p.x += em.driftX + sway * 0.4;
         p.y += em.vy;
-        p.radius += 0.18; // Expands as it cools
+        p.radius += 0.18;
 
-        // Smooth Bell-curve Opacity
         let alpha = 0;
         if (p.life < 0.25) {
-          alpha = (p.life / 0.25) * 0.38;
+          alpha = (p.life / 0.25) * 0.45;
         } else {
-          alpha = (1 - (p.life - 0.25) / 0.75) * 0.38;
+          alpha = (1 - (p.life - 0.25) / 0.75) * 0.45;
         }
 
         const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
@@ -231,30 +220,30 @@ export default function AnimatedCustomerBackground({
         ctx.fill();
       });
 
-      // 3. Kitchen Tawa Flame Glow Pulser
+      // 3. Kitchen Tawa Flame Glow
       const tawaX = 0.36 * canvas.width;
       const tawaY = 0.68 * canvas.height;
-      const flameFlicker = 0.15 + Math.sin(time * 8) * 0.06 + Math.cos(time * 14) * 0.04;
-      const flameGrad = ctx.createRadialGradient(tawaX, tawaY, 5, tawaX, tawaY, 120);
+      const flameFlicker = 0.2 + Math.sin(time * 8) * 0.08 + Math.cos(time * 14) * 0.04;
+      const flameGrad = ctx.createRadialGradient(tawaX, tawaY, 5, tawaX, tawaY, 130);
       flameGrad.addColorStop(0, `rgba(249, 115, 22, ${flameFlicker})`);
-      flameGrad.addColorStop(0.5, `rgba(234, 88, 12, ${flameFlicker * 0.4})`);
+      flameGrad.addColorStop(0.5, `rgba(234, 88, 12, ${flameFlicker * 0.5})`);
       flameGrad.addColorStop(1, 'rgba(234, 88, 12, 0)');
 
       ctx.beginPath();
-      ctx.arc(tawaX, tawaY, 120, 0, Math.PI * 2);
+      ctx.arc(tawaX, tawaY, 130, 0, Math.PI * 2);
       ctx.fillStyle = flameGrad;
       ctx.fill();
 
       // 4. Hot Filter Coffee Froth Shimmer
       const coffeeX = 0.84 * canvas.width;
       const coffeeY = 0.80 * canvas.height;
-      const frothGlow = 0.12 + Math.sin(time * 3) * 0.05;
-      const coffeeGrad = ctx.createRadialGradient(coffeeX, coffeeY, 2, coffeeX, coffeeY, 35);
+      const frothGlow = 0.16 + Math.sin(time * 3) * 0.06;
+      const coffeeGrad = ctx.createRadialGradient(coffeeX, coffeeY, 2, coffeeX, coffeeY, 40);
       coffeeGrad.addColorStop(0, `rgba(251, 191, 36, ${frothGlow})`);
       coffeeGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
 
       ctx.beginPath();
-      ctx.arc(coffeeX, coffeeY, 35, 0, Math.PI * 2);
+      ctx.arc(coffeeX, coffeeY, 40, 0, Math.PI * 2);
       ctx.fillStyle = coffeeGrad;
       ctx.fill();
 
@@ -275,10 +264,10 @@ export default function AnimatedCustomerBackground({
       style={{
         position: 'relative',
         width: '100%',
-        minHeight: '100vh',
+        minHeight: '100%',
       }}
     >
-      {/* ─── 1. FIXED BACKGROUND VIDEO-LIKE SCENE ─────────────────────────── */}
+      {/* ─── 1. FIXED FULL-SCREEN BACKGROUND SCENE ────────────────────────── */}
       <div
         className="restaurant-scene-wrapper"
         style={{
@@ -292,7 +281,6 @@ export default function AnimatedCustomerBackground({
           overflow: 'hidden',
         }}
       >
-        {/* Base Cinematic Image with subtle breathing animation */}
         <div
           className={`scene-image-layer ${reactionStage === 'super' ? 'scene-celebrating' : ''}`}
           style={{
@@ -300,14 +288,14 @@ export default function AnimatedCustomerBackground({
             inset: 0,
             backgroundImage: "url('/images/customer_bg.jpg')",
             backgroundSize: 'cover',
-            backgroundPosition: 'center right',
+            backgroundPosition: 'center 40%',
             transformOrigin: '70% 40%',
             transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
-            filter: reactionStage === 'super' ? 'saturate(1.12) contrast(1.05)' : 'saturate(1)',
+            filter: reactionStage === 'super' ? 'saturate(1.2) contrast(1.1) brightness(1.05)' : 'saturate(1.05) brightness(1.0)',
           }}
         />
 
-        {/* Dynamic Canvas Layer for Continuous Rising Steam & Kitchen Flames */}
+        {/* Dynamic Canvas Layer for Rising Steam & Kitchen Flames */}
         <canvas
           ref={canvasRef}
           style={{
@@ -319,8 +307,7 @@ export default function AnimatedCustomerBackground({
           }}
         />
 
-        {/* ─── 2. FUNNY CHARACTER REACTION & COMIC BUBBLE OVERLAY ───────── */}
-        {/* Customer Thumbs-Up Halo / Aura */}
+        {/* ─── 2. CHARACTER REACTION & COMIC BUBBLE ──────────────────────── */}
         <div
           className={`customer-reaction-aura ${reactionStage === 'super' ? 'active-aura' : ''}`}
           style={{
@@ -330,7 +317,7 @@ export default function AnimatedCustomerBackground({
             width: '280px',
             height: '280px',
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(249, 115, 22, 0.35) 0%, rgba(234, 88, 12, 0) 70%)',
+            background: 'radial-gradient(circle, rgba(249, 115, 22, 0.45) 0%, rgba(234, 88, 12, 0) 70%)',
             pointerEvents: 'none',
             opacity: reactionStage === 'super' ? 1 : 0,
             transform: reactionStage === 'super' ? 'scale(1.3)' : 'scale(0.8)',
@@ -338,21 +325,20 @@ export default function AnimatedCustomerBackground({
           }}
         />
 
-        {/* Comic "SUPER! 😋🔥" Speech Bubble */}
         {showBubble && (
           <div
             className="comic-super-bubble bounce-in"
             style={{
               position: 'absolute',
               right: '25%',
-              top: '16%',
-              zIndex: 3,
+              top: '14%',
+              zIndex: 5,
               background: 'linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)',
               color: '#0f172a',
-              padding: '14px 22px',
-              borderRadius: '24px',
+              padding: '16px 26px',
+              borderRadius: '26px',
               border: '3px solid #f97316',
-              boxShadow: '0 12px 36px rgba(249, 115, 22, 0.45), 0 0 20px rgba(251, 191, 36, 0.6)',
+              boxShadow: '0 16px 48px rgba(249, 115, 22, 0.55), 0 0 24px rgba(251, 191, 36, 0.7)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -362,11 +348,11 @@ export default function AnimatedCustomerBackground({
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '26px', animation: 'wiggle 0.6s infinite' }}>🔥</span>
+              <span style={{ fontSize: '28px', animation: 'wiggle 0.6s infinite' }}>🔥</span>
               <span
                 style={{
                   fontFamily: "'Outfit', 'Impact', sans-serif",
-                  fontSize: '30px',
+                  fontSize: '32px',
                   fontWeight: 900,
                   letterSpacing: '1.5px',
                   background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 50%, #f59e0b 100%)',
@@ -378,22 +364,21 @@ export default function AnimatedCustomerBackground({
               >
                 SUPER!
               </span>
-              <span style={{ fontSize: '26px', animation: 'wiggle 0.6s infinite 0.2s' }}>😋</span>
+              <span style={{ fontSize: '28px', animation: 'wiggle 0.6s infinite 0.2s' }}>😋</span>
             </div>
 
             <div
               style={{
                 fontSize: '13px',
-                fontWeight: 800,
+                fontWeight: 900,
                 color: '#b45309',
-                marginTop: '3px',
+                marginTop: '4px',
                 letterSpacing: '0.5px',
               }}
             >
               ಸೂಪರ್ ಊಟ! • Pakka Taste! 👍
             </div>
 
-            {/* Bubble Tail */}
             <div
               style={{
                 position: 'absolute',
@@ -421,7 +406,6 @@ export default function AnimatedCustomerBackground({
           </div>
         )}
 
-        {/* Floating Emoji Bursts */}
         {emojiBurst.map((item) => (
           <div
             key={item.id}
@@ -429,11 +413,10 @@ export default function AnimatedCustomerBackground({
               position: 'absolute',
               left: `${item.x}%`,
               top: `${item.y}%`,
-              fontSize: '28px',
+              fontSize: '30px',
               pointerEvents: 'none',
               transform: `translate(${item.vx}px, ${item.vy}px) rotate(${item.rot}deg)`,
               opacity: 1,
-              transition: 'all 2s cubic-bezier(0.25, 1, 0.5, 1)',
               animation: 'floatFadeOut 2.2s forwards',
               zIndex: 4,
             }}
@@ -442,36 +425,17 @@ export default function AnimatedCustomerBackground({
           </div>
         ))}
 
-        {/* ─── 3. MODERN WEB APP OVERLAY (CLEAN LEFT/CENTER FOR TEXT & CARDS) ── */}
-        {/* Left & Center dark gradient vignette guaranteeing readability of cards and text */}
+        {/* ─── 3. TRANSLUCENT CINEMATIC VIGNETTE ──────────────────────────── */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: `
-              linear-gradient(90deg, 
-                rgba(10, 10, 15, ${Math.min(0.96, bgDim + 0.25)}) 0%, 
-                rgba(10, 10, 15, ${Math.min(0.88, bgDim + 0.12)}) 45%, 
-                rgba(10, 10, 15, ${bgDim * 0.75}) 70%, 
-                rgba(10, 10, 15, ${bgDim * 0.45}) 100%
-              ),
-              radial-gradient(ellipse at 85% 50%, transparent 20%, rgba(10, 10, 15, 0.4) 100%)
+              radial-gradient(ellipse at center, rgba(10, 10, 18, ${bgDim * 0.3}) 0%, rgba(10, 10, 18, ${bgDim}) 100%),
+              linear-gradient(180deg, rgba(10, 10, 18, ${bgDim * 0.5}) 0%, transparent 40%, rgba(10, 10, 18, ${bgDim * 0.7}) 100%)
             `,
             pointerEvents: 'none',
             transition: 'background 0.3s ease',
-          }}
-        />
-
-        {/* Subtle Warm Ambiance Light Bar Top & Bottom */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.4), transparent)',
-            pointerEvents: 'none',
           }}
         />
       </div>
@@ -484,21 +448,20 @@ export default function AnimatedCustomerBackground({
             position: 'fixed',
             bottom: '24px',
             right: '24px',
-            zIndex: 90,
-            background: 'rgba(24, 24, 31, 0.88)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(249, 115, 22, 0.3)',
+            zIndex: 99,
+            background: 'rgba(15, 23, 42, 0.92)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(249, 115, 22, 0.4)',
             borderRadius: '40px',
             padding: '8px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '12px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(249,115,22,0.2)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(249,115,22,0.25)',
             fontSize: '12px',
-            color: 'var(--text-secondary)',
+            color: '#cbd5e1',
           }}
         >
-          {/* Restaurant Live Vibe Badge */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
@@ -511,14 +474,13 @@ export default function AnimatedCustomerBackground({
                 animation: isPlaying ? 'pulse 2s infinite' : 'none',
               }}
             />
-            <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '11px' }}>
+            <span style={{ fontWeight: 800, color: '#ffffff', fontSize: '11px' }}>
               Darshini Live
             </span>
           </div>
 
-          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.1)' }} />
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255,255,255,0.15)' }} />
 
-          {/* Trigger "SUPER!" reaction button */}
           <button
             onClick={triggerSuperReaction}
             className="btn btn-sm"
@@ -528,72 +490,69 @@ export default function AnimatedCustomerBackground({
               color: 'white',
               border: 'none',
               borderRadius: '20px',
-              padding: '4px 12px',
-              fontSize: '11px',
-              fontWeight: 800,
+              padding: '5px 14px',
+              fontSize: '12px',
+              fontWeight: 900,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              boxShadow: '0 2px 10px rgba(249, 115, 22, 0.4)',
+              boxShadow: '0 3px 12px rgba(249, 115, 22, 0.4)',
               transition: 'transform 0.15s ease',
             }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.95)')}
+            onMouseDown={(e) => (e.currentTarget.style.transform = 'scale(0.94)')}
             onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
             <span>😋</span>
             <span>SUPER!</span>
           </button>
 
-          {/* Sound Toggle */}
           <button
             onClick={() => setSoundEnabled((prev) => !prev)}
             title={soundEnabled ? 'Mute reaction sound' : 'Enable reaction sound'}
             style={{
-              background: soundEnabled ? 'rgba(249, 115, 22, 0.2)' : 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: soundEnabled ? 'rgba(249, 115, 22, 0.25)' : 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '50%',
-              width: '28px',
-              height: '28px',
+              width: '30px',
+              height: '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '12px',
-              color: soundEnabled ? '#fb923c' : 'var(--text-secondary)',
+              fontSize: '13px',
+              color: soundEnabled ? '#fb923c' : '#94a3b8',
             }}
           >
             {soundEnabled ? '🔊' : '🔇'}
           </button>
 
-          {/* Loop Play/Pause */}
           <button
             onClick={() => setIsPlaying((p) => !p)}
             title={isPlaying ? 'Pause animations' : 'Resume animations'}
             style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
               borderRadius: '50%',
-              width: '28px',
-              height: '28px',
+              width: '30px',
+              height: '30px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '11px',
-              color: 'var(--text-secondary)',
+              fontSize: '12px',
+              color: '#e2e8f0',
             }}
           >
             {isPlaying ? '⏸' : '▶'}
           </button>
 
-          {/* Dimmer Slider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Adjust background dimness for reading clarity">
-            <span style={{ fontSize: '11px' }}>👁️</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Adjust background visibility / dimness">
+            <span style={{ fontSize: '12px' }}>👁️</span>
             <input
               type="range"
-              min="0.35"
-              max="0.88"
+              min="0.0"
+              max="0.80"
               step="0.05"
               value={bgDim}
               onChange={(e) => setBgDim(parseFloat(e.target.value))}
@@ -608,7 +567,7 @@ export default function AnimatedCustomerBackground({
         </div>
       )}
 
-      {/* ─── 5. FOREGROUND CONTENT (CUSTOMER DASHBOARD CARDS & TABS) ──────── */}
+      {/* ─── 5. FOREGROUND CONTENT ────────────────────────────────────────── */}
       <div
         className="foreground-content-wrapper"
         style={{
@@ -654,11 +613,6 @@ export default function AnimatedCustomerBackground({
             opacity: 0;
             transform: translate(30px, -90px) scale(0.9);
           }
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.2); }
         }
 
         .scene-image-layer {
