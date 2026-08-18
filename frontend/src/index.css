@@ -2067,3 +2067,68 @@ input, textarea, select {
     padding: 30px 24px;
   }
 }
+
+/* ─── Animated South Indian Restaurant Background Styles ─── */
+.animated-restaurant-bg-container {
+  position: relative;
+  min-height: 100%;
+}
+
+.animated-restaurant-bg-container .card {
+  background: rgba(24, 24, 34, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+}
+
+.animated-restaurant-bg-container .card:hover {
+  background: rgba(30, 30, 44, 0.92);
+  border-color: rgba(249, 115, 22, 0.35);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55), 0 0 15px rgba(249, 115, 22, 0.15);
+}
+
+.animated-restaurant-bg-container .bg-hud-controls {
+  user-select: none;
+  animation: fadeInBottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Animated Admin Business Boom Background Styles ─── */
+.animated-admin-bg-container {
+  position: relative;
+  min-height: 100%;
+}
+
+.animated-admin-bg-container .card,
+.animated-admin-bg-container .stat-card {
+  background: rgba(22, 22, 32, 0.86);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+}
+
+.animated-admin-bg-container .card:hover,
+.animated-admin-bg-container .stat-card:hover {
+  background: rgba(28, 28, 42, 0.92);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.55), 0 0 16px rgba(16, 185, 129, 0.15);
+}
+
+.animated-admin-bg-container .admin-hud-controls {
+  user-select: none;
+  animation: fadeInBottom 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
