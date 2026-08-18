@@ -504,6 +504,17 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
         </button>
 
         <button
+          className={`btn ${activeTab === 'cart' ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() => setActiveTab('cart')}
+          style={{ borderRadius: '20px', position: 'relative' }}
+        >
+          <i className="bi bi-cart-fill" style={{ marginRight: '6px' }}></i> Cart & Checkout ({cart.reduce((s, i) => s + i.quantity, 0)})
+          {cart.length > 0 && (
+            <span style={{ position: 'absolute', top: '-3px', right: '-3px', width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', border: '2px solid #fff' }} />
+          )}
+        </button>
+
+        <button
           className={`btn ${activeTab === 'orders' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => setActiveTab('orders')}
           style={{ borderRadius: '20px' }}
@@ -883,6 +894,159 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
         </div>
       )}
 
+      {/* ─── TAB: CART & CHECKOUT ────────────────────────────────────────── */}
+      {activeTab === 'cart' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ fontSize: '22px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                Your Order Summary 🛒
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '4px 0 0 0' }}>
+                Review selected dishes, specify dining preferences, and confirm your order.
+              </p>
+            </div>
+            {cart.length > 0 && (
+              <button className="btn btn-ghost btn-sm" onClick={() => setCart([])} style={{ color: 'var(--color-danger)' }}>
+                <i className="bi bi-trash3-fill" style={{ marginRight: '6px' }}></i> Clear Cart
+              </button>
+            )}
+          </div>
+
+          {cart.length === 0 ? (
+            <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <i className="bi bi-cart-x" style={{ fontSize: '48px', color: 'var(--text-muted)' }}></i>
+              <h3 style={{ marginTop: '16px', color: 'var(--text-primary)' }}>Your Cart is Empty</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                Explore our South Indian specialties like Masala Dosa, Filter Coffee, and Biryani to add items.
+              </p>
+              <button className="btn btn-primary" onClick={() => setActiveTab('menu')}>
+                <i className="bi bi-journal-richtext" style={{ marginRight: '6px' }}></i> Browse Menu
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '24px', alignItems: 'flex-start' }}>
+              {/* Left Column: Cart Items List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {cart.map((item) => (
+                  <div key={item.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {item.name}
+                      </h4>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-primary)' }}>
+                        ₹{Number(item.price).toFixed(2)} each
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-elevated)', borderRadius: '24px', padding: '4px 8px' }}>
+                        <button className="btn btn-secondary btn-sm" onClick={() => updateCartQuantity(item.id, -1)} style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }}>-</button>
+                        <span style={{ fontWeight: 800, minWidth: '24px', textAlign: 'center' }}>{item.quantity}</span>
+                        <button className="btn btn-secondary btn-sm" onClick={() => updateCartQuantity(item.id, 1)} style={{ width: '28px', height: '28px', padding: 0, borderRadius: '50%' }}>+</button>
+                      </div>
+                      <div style={{ fontSize: '16px', fontWeight: 800, minWidth: '80px', textAlign: 'right', color: 'var(--text-primary)' }}>
+                        ₹{(Number(item.price) * item.quantity).toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right Column: Order Confirmation & Checkout Panel */}
+              <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  Confirm & Place Order 📋
+                </h3>
+
+                {/* Dining Preference */}
+                <div>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
+                    Dining Option
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${orderType === 'dine-in' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setOrderType('dine-in')}
+                    >
+                      🍽️ Dine-in
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm ${orderType === 'pickup' ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => setOrderType('pickup')}
+                    >
+                      🥡 Takeaway
+                    </button>
+                  </div>
+                </div>
+
+                {orderType === 'dine-in' && (
+                  <div>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+                      Table Number
+                    </label>
+                    <select
+                      className="form-input"
+                      value={tableNumber}
+                      onChange={(e) => setTableNumber(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      {['Table 1', 'Table 2', 'Table 3', 'Table 4', 'Table 5', 'Table 6', 'Table 7', 'Table 8', 'Counter Express'].map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Price Breakdown */}
+                <div style={{ borderTop: '1px solid var(--border-default)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    <span>Items Subtotal ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
+                    <span>₹{cartTotal.toFixed(2)}</span>
+                  </div>
+                  {cartDiscount > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-success)', fontWeight: 700 }}>
+                      <span>Combo Promotion (30% Off)</span>
+                      <span>-₹{cartDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                    <span>Estimated Prep Time</span>
+                    <span>⚡ ~12 - 15 mins</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 900, color: 'var(--text-primary)', borderTop: '1px dashed var(--border-default)', paddingTop: '12px', marginTop: '4px' }}>
+                    <span>Total Amount</span>
+                    <span style={{ color: 'var(--color-primary)' }}>₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Large Confirm & Place Order Action Button */}
+                <button
+                  className="btn btn-primary btn-block btn-lg"
+                  onClick={handlePlaceOrder}
+                  disabled={isSubmittingOrder}
+                  style={{
+                    padding: '16px',
+                    fontSize: '16px',
+                    fontWeight: 900,
+                    borderRadius: '14px',
+                    boxShadow: '0 4px 20px rgba(249, 115, 22, 0.4)',
+                  }}
+                >
+                  {isSubmittingOrder ? (
+                    <span>⏳ Sending Order Ticket...</span>
+                  ) : (
+                    <span>🚀 Confirm & Place Order (₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)})</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── TAB 5: REVIEWS & FEEDBACK HISTORY ──────────────────────────── */}
       {activeTab === 'reviews' && (
         <div>
@@ -1035,61 +1199,235 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
 
       {/* ─── CART SLIDE-OVER DRAWER ─────────────────────────────────────── */}
       {showCartDrawer && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', justifyContent: 'flex-end' }}>
-          <div style={{ width: '100%', maxWidth: '420px', height: '100%', background: 'var(--bg-card)', display: 'flex', flexDirection: 'column', padding: '24px', boxShadow: 'var(--shadow-lg)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '18px', fontWeight: 800, margin: 0 }}>Your Order Cart 🛒</h2>
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowCartDrawer(false)}>
-                <i className="bi bi-x-lg"></i>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 10000,
+            display: 'flex',
+            justifyContent: 'flex-end',
+            animation: 'fadeIn 0.2s ease-out',
+          }}
+          onClick={() => setShowCartDrawer(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '440px',
+              height: '100vh',
+              maxHeight: '100vh',
+              background: '#111118',
+              borderLeft: '1px solid rgba(249, 115, 22, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              padding: '24px',
+              boxShadow: '-10px 0 40px rgba(0,0,0,0.8)',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drawer Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <div>
+                <h2 style={{ fontSize: '20px', fontWeight: 900, margin: 0, color: '#ffffff' }}>Your Order Cart 🛒</h2>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+                  {cart.reduce((s, i) => s + i.quantity, 0)} {cart.reduce((s, i) => s + i.quantity, 0) === 1 ? 'item' : 'items'} selected
+                </span>
+              </div>
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowCartDrawer(false)}
+                style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <i className="bi bi-x-lg" style={{ fontSize: '16px' }}></i>
               </button>
             </div>
 
-            {/* Order type and table number inputs removed completely */}
-
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Cart Items Scroll Area */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px', marginBottom: '16px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)' }}>
-                  <i className="bi bi-cart-x" style={{ fontSize: '36px' }}></i>
-                  <p style={{ marginTop: '8px' }}>Your cart is empty</p>
+                <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)', padding: '40px 20px' }}>
+                  <i className="bi bi-cart-x" style={{ fontSize: '48px', color: 'var(--text-muted)' }}></i>
+                  <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 600 }}>Your cart is empty</p>
+                  <button className="btn btn-primary btn-sm" onClick={() => { setShowCartDrawer(false); setActiveTab('menu'); }} style={{ marginTop: '10px' }}>
+                    Browse Menu
+                  </button>
                 </div>
               ) : (
                 cart.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-elevated)' }}>
+                  <div
+                    key={item.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '14px',
+                      borderRadius: '12px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
                     <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>{item.name}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--color-primary)', fontWeight: 700 }}>
+                      <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '15px' }}>{item.name}</div>
+                      <div style={{ fontSize: '13px', color: '#fb923c', fontWeight: 800, marginTop: '2px' }}>
                         ₹{Number(item.price).toFixed(2)}
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => updateCartQuantity(item.id, -1)} style={{ padding: '2px 8px' }}>-</button>
-                      <span style={{ fontWeight: 700, fontSize: '14px' }}>{item.quantity}</span>
-                      <button className="btn btn-secondary btn-sm" onClick={() => updateCartQuantity(item.id, 1)} style={{ padding: '2px 8px' }}>+</button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '20px', padding: '2px 6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => updateCartQuantity(item.id, -1)}
+                          style={{ width: '24px', height: '24px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          -
+                        </button>
+                        <span style={{ fontWeight: 800, fontSize: '14px', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => updateCartQuantity(item.id, 1)}
+                          style={{ width: '24px', height: '24px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div style={{ fontWeight: 800, minWidth: '60px', textAlign: 'right', color: '#ffffff', fontSize: '14px' }}>
+                        ₹{(Number(item.price) * item.quantity).toFixed(2)}
+                      </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
 
+            {/* Fixed Drawer Footer: Checkout & Place Order Action */}
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--border-default)', paddingTop: '16px', marginTop: '16px' }}>
+              <div
+                style={{
+                  borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+                  paddingTop: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  background: '#111118',
+                }}
+              >
+                {/* Dining Option Toggle */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${orderType === 'dine-in' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setOrderType('dine-in')}
+                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}
+                  >
+                    🍽️ Dine-in
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${orderType === 'pickup' ? 'btn-primary' : 'btn-secondary'}`}
+                    onClick={() => setOrderType('pickup')}
+                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}
+                  >
+                    🥡 Takeaway
+                  </button>
+                </div>
+
                 {cartDiscount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-success)', marginBottom: '8px' }}>
-                    <span>Promo Combo Discount:</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10b981', fontWeight: 700 }}>
+                    <span>Combo Promo Discount:</span>
                     <span>-₹{cartDiscount.toFixed(2)}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 800, marginBottom: '16px' }}>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '18px', fontWeight: 900, color: '#ffffff' }}>
                   <span>Total Amount:</span>
-                  <span style={{ color: 'var(--color-primary)' }}>₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}</span>
+                  <span style={{ color: '#f97316', fontSize: '22px' }}>
+                    ₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}
+                  </span>
                 </div>
 
-                <button className="btn btn-primary btn-block btn-lg" onClick={handlePlaceOrder} disabled={isSubmittingOrder}>
-                  {isSubmittingOrder ? 'Sending Order...' : 'Confirm & Place Order 🚀'}
+                <button
+                  className="btn btn-primary btn-block btn-lg"
+                  onClick={handlePlaceOrder}
+                  disabled={isSubmittingOrder}
+                  style={{
+                    padding: '14px',
+                    fontSize: '15px',
+                    fontWeight: 900,
+                    borderRadius: '12px',
+                    boxShadow: '0 4px 18px rgba(249, 115, 22, 0.5)',
+                  }}
+                >
+                  {isSubmittingOrder ? '⏳ Sending Order Ticket...' : 'Confirm & Place Order 🚀'}
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── STICKY BOTTOM QUICK-ORDER FLOATING BAR ───────────────────────── */}
+      {cart.length > 0 && !showCartDrawer && (
+        <div
+          className="sticky-quick-order-bar"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 900,
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)',
+            border: '2px solid #f97316',
+            borderRadius: '40px',
+            padding: '10px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '20px',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(249, 115, 22, 0.5)',
+            color: '#fff',
+            animation: 'fadeInBottom 0.4s ease-out',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--gradient-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+              🛒
+            </div>
+            <div>
+              <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>
+                {cart.reduce((s, i) => s + i.quantity, 0)} {cart.reduce((s, i) => s + i.quantity, 0) === 1 ? 'Dish' : 'Dishes'} in Cart
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#f97316' }}>
+                ₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={() => setShowCartDrawer(true)}
+              style={{ borderRadius: '20px', padding: '8px 16px', fontWeight: 700 }}
+            >
+              View Cart
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={handlePlaceOrder}
+              disabled={isSubmittingOrder}
+              style={{
+                borderRadius: '20px',
+                padding: '8px 20px',
+                fontWeight: 900,
+                fontSize: '14px',
+                boxShadow: '0 4px 14px rgba(249, 115, 22, 0.5)',
+              }}
+            >
+              {isSubmittingOrder ? 'Placing Order...' : 'Confirm & Place Order 🚀'}
+            </button>
           </div>
         </div>
       )}
