@@ -1245,12 +1245,23 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
               </button>
             </div>
 
-            {/* Cart Items Scroll Area */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px', marginBottom: '16px' }}>
+            {/* Cart Items Scroll Area with strict max-height so checkout footer is always in view */}
+            <div
+              style={{
+                flex: '1 1 auto',
+                maxHeight: 'calc(100vh - 290px)',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                paddingRight: '4px',
+                marginBottom: '10px',
+              }}
+            >
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)', padding: '40px 20px' }}>
-                  <i className="bi bi-cart-x" style={{ fontSize: '48px', color: 'var(--text-muted)' }}></i>
-                  <p style={{ marginTop: '12px', fontSize: '15px', fontWeight: 600 }}>Your cart is empty</p>
+                <div style={{ textAlign: 'center', margin: 'auto', color: 'var(--text-muted)', padding: '30px 16px' }}>
+                  <i className="bi bi-cart-x" style={{ fontSize: '42px', color: 'var(--text-muted)' }}></i>
+                  <p style={{ marginTop: '10px', fontSize: '14px', fontWeight: 600 }}>Your cart is empty</p>
                   <button className="btn btn-primary btn-sm" onClick={() => { setShowCartDrawer(false); setActiveTab('menu'); }} style={{ marginTop: '10px' }}>
                     Browse Menu
                   </button>
@@ -1263,33 +1274,34 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '14px',
+                      padding: '12px 14px',
                       borderRadius: '12px',
                       background: 'rgba(255, 255, 255, 0.04)',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
+                      flexShrink: 0,
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '15px' }}>{item.name}</div>
+                      <div style={{ fontWeight: 700, color: '#ffffff', fontSize: '14px' }}>{item.name}</div>
                       <div style={{ fontSize: '13px', color: '#fb923c', fontWeight: 800, marginTop: '2px' }}>
                         ₹{Number(item.price).toFixed(2)}
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', borderRadius: '20px', padding: '2px 6px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.5)', borderRadius: '20px', padding: '2px 6px', border: '1px solid rgba(255,255,255,0.1)' }}>
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => updateCartQuantity(item.id, -1)}
-                          style={{ width: '24px', height: '24px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ width: '22px', height: '22px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           -
                         </button>
-                        <span style={{ fontWeight: 800, fontSize: '14px', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
+                        <span style={{ fontWeight: 800, fontSize: '13px', minWidth: '18px', textAlign: 'center' }}>{item.quantity}</span>
                         <button
                           className="btn btn-secondary btn-sm"
                           onClick={() => updateCartQuantity(item.id, 1)}
-                          style={{ width: '24px', height: '24px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          style={{ width: '22px', height: '22px', padding: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         >
                           +
                         </button>
@@ -1303,15 +1315,16 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
               )}
             </div>
 
-            {/* Fixed Drawer Footer: Checkout & Place Order Action */}
+            {/* Fixed Pinned Drawer Footer: Always visible on screen */}
             {cart.length > 0 && (
               <div
                 style={{
-                  borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-                  paddingTop: '16px',
+                  flexShrink: 0,
+                  borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+                  paddingTop: '14px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '12px',
+                  gap: '10px',
                   background: '#111118',
                 }}
               >
@@ -1321,15 +1334,15 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
                     type="button"
                     className={`btn btn-sm ${orderType === 'dine-in' ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setOrderType('dine-in')}
-                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}
+                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 800, padding: '8px' }}
                   >
-                    🍽️ Dine-in
+                    🍽️ Dine-in (Table)
                   </button>
                   <button
                     type="button"
                     className={`btn btn-sm ${orderType === 'pickup' ? 'btn-primary' : 'btn-secondary'}`}
                     onClick={() => setOrderType('pickup')}
-                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 700 }}
+                    style={{ flex: 1, borderRadius: '8px', fontSize: '12px', fontWeight: 800, padding: '8px' }}
                   >
                     🥡 Takeaway
                   </button>
@@ -1337,31 +1350,44 @@ export default function CustomerDashboard({ activeTab: propActiveTab }) {
 
                 {cartDiscount > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10b981', fontWeight: 700 }}>
-                    <span>Combo Promo Discount:</span>
+                    <span>Combo Discount:</span>
                     <span>-₹{cartDiscount.toFixed(2)}</span>
                   </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '18px', fontWeight: 900, color: '#ffffff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '17px', fontWeight: 900, color: '#ffffff' }}>
                   <span>Total Amount:</span>
                   <span style={{ color: '#f97316', fontSize: '22px' }}>
                     ₹{Math.max(0, cartTotal - cartDiscount).toFixed(2)}
                   </span>
                 </div>
 
+                {/* Highly Prominent Confirm & Place Order Action Button */}
                 <button
                   className="btn btn-primary btn-block btn-lg"
                   onClick={handlePlaceOrder}
                   disabled={isSubmittingOrder}
                   style={{
                     padding: '14px',
-                    fontSize: '15px',
+                    fontSize: '16px',
                     fontWeight: 900,
                     borderRadius: '12px',
-                    boxShadow: '0 4px 18px rgba(249, 115, 22, 0.5)',
+                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #10b981 100%)',
+                    boxShadow: '0 4px 20px rgba(249, 115, 22, 0.6)',
+                    border: 'none',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
                   }}
                 >
-                  {isSubmittingOrder ? '⏳ Sending Order Ticket...' : 'Confirm & Place Order 🚀'}
+                  {isSubmittingOrder ? (
+                    <span>⏳ Placing Order in Kitchen...</span>
+                  ) : (
+                    <span>🚀 Confirm & Place Order</span>
+                  )}
                 </button>
               </div>
             )}

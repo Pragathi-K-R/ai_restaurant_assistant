@@ -446,9 +446,9 @@ export default function AnimatedCustomerBackground({
           className="bg-hud-controls"
           style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            zIndex: 99,
+            bottom: '20px',
+            left: '280px',
+            zIndex: 90,
             background: 'rgba(15, 23, 42, 0.92)',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(249, 115, 22, 0.4)',
