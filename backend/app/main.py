@@ -39,6 +39,11 @@ async def lifespan(app: FastAPI):
     try:
         await create_tables()
         logger.info("✅ Database initialized successfully")
+        
+        # Auto-seed the admin user on fresh deployments
+        from seed_admin import seed_admin
+        await seed_admin()
+        logger.info("✅ Admin user verified/seeded successfully")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {e}")
         raise
