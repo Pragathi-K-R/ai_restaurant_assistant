@@ -58,6 +58,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.api import api_router
+app.include_router(api_router)
+
 class AddKnowledgeDocRequest(BaseModel):
     id: str = Field(..., description="Unique ID for document")
     text: str = Field(..., min_length=10, description="Content text of document or menu policy")
