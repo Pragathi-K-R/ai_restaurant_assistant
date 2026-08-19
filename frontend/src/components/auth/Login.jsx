@@ -32,11 +32,6 @@ export default function Login() {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  const fillDemoAdmin = () => {
-    setFormData({ email: 'admin@restaurant.com', password: 'Admin@123' });
-    setErrors({});
-    toast.success('Demo admin credentials filled! 🔑');
-  };
 
   const validate = () => {
     const newErrors = {};
@@ -213,7 +208,7 @@ export default function Login() {
                   type="text"
                   name="email"
                   className={errors.email ? 'error' : ''}
-                  placeholder="admin@restaurant.com"
+                  placeholder="Enter your Employee ID"
                   value={formData.email}
                   onChange={handleChange}
                   autoComplete="username"
@@ -407,43 +402,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Quick Demo Credentials Auto-Fill Helper */}
-          <div
-            style={{
-              marginTop: '22px',
-              padding: '12px 16px',
-              background: 'rgba(249, 115, 22, 0.08)',
-              borderRadius: '14px',
-              border: '1px solid rgba(249, 115, 22, 0.22)',
-              display: 'flex',
-              justify: 'space-between',
-              alignItems: 'center'
-            }}
-          >
-            <div>
-              <p style={{ fontSize: '12px', color: '#f97316', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span>🔑</span> Demo Admin Account
-              </p>
-              <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
-                ID: admin@restaurant.com / Pass: Admin@123
-              </p>
-            </div>
-            <button
-              className="btn btn-ghost btn-sm"
-              onClick={fillDemoAdmin}
-              style={{
-                fontSize: '11px',
-                padding: '4px 12px',
-                borderRadius: '8px',
-                background: 'rgba(249, 115, 22, 0.15)',
-                color: '#f97316',
-                border: '1px solid rgba(249, 115, 22, 0.3)',
-                fontWeight: 700
-              }}
-            >
-              Auto-Fill
-            </button>
-          </div>
 
           {/* Create Account Link */}
           <p className="auth-footer" style={{ marginTop: '22px', fontSize: '14px', color: '#94a3b8', textAlign: 'center' }}>
